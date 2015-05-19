@@ -2572,8 +2572,7 @@ angular.module('mm.core.courses', [])
                 templateUrl: 'core/components/courses/templates/list.html',
                 controller: 'mmCoursesListCtrl'
             }
-        },
-        cache: false
+        }
     });
 });
 
@@ -2757,37 +2756,6 @@ angular.module('mm.core.user', [])
 });
 
 angular.module('mm.core.course')
-.directive('mmCourseContent', function($log, $mmCourseDelegate, $state) {
-    $log = $log.getInstance('mmCourseContent');
-    function link(scope, element, attrs) {
-        var module = JSON.parse(attrs.module),
-            data;
-        data = $mmCourseDelegate.getDataFromContentHandlerFor(module.modname, module);
-        scope = angular.extend(scope, data);
-    }
-    function controller($scope) {
-        $scope.handleClick = function(e, button) {
-            e.stopPropagation();
-            e.preventDefault();
-            button.callback($scope);
-        };
-        $scope.jump = function(e, state, stateParams) {
-            e.stopPropagation();
-            e.preventDefault();
-            $state.go(state, stateParams);
-        };
-    }
-    return {
-        controller: controller,
-        link: link,
-        replace: true,
-        restrict: 'E',
-        scope: {},
-        templateUrl: 'core/components/course/templates/content.html',
-    };
-});
-
-angular.module('mm.core.course')
 .controller('mmCourseModContentCtrl', function($log, $stateParams, $scope) {
     $log = $log.getInstance('mmCourseModContentCtrl');
     var module = $stateParams.module || {};
@@ -2870,6 +2838,37 @@ angular.module('mm.core.course')
         return 'site.mm_course-section';
     };
     loadSections();
+});
+
+angular.module('mm.core.course')
+.directive('mmCourseContent', function($log, $mmCourseDelegate, $state) {
+    $log = $log.getInstance('mmCourseContent');
+    function link(scope, element, attrs) {
+        var module = JSON.parse(attrs.module),
+            data;
+        data = $mmCourseDelegate.getDataFromContentHandlerFor(module.modname, module);
+        scope = angular.extend(scope, data);
+    }
+    function controller($scope) {
+        $scope.handleClick = function(e, button) {
+            e.stopPropagation();
+            e.preventDefault();
+            button.callback($scope);
+        };
+        $scope.jump = function(e, state, stateParams) {
+            e.stopPropagation();
+            e.preventDefault();
+            $state.go(state, stateParams);
+        };
+    }
+    return {
+        controller: controller,
+        link: link,
+        replace: true,
+        restrict: 'E',
+        scope: {},
+        templateUrl: 'core/components/course/templates/content.html',
+    };
 });
 
 angular.module('mm.core.course')
