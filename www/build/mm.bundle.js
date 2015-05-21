@@ -2761,8 +2761,7 @@ angular.module('mm.core.courses', [])
                 templateUrl: 'core/components/courses/templates/list.html',
                 controller: 'mmCoursesListCtrl'
             }
-        },
-        cache: false
+        }
     });
 });
 
