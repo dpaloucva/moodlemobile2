@@ -69,6 +69,14 @@ angular.module('mm.core.question')
      */
     self.extractQuestionComment = function(question) {
         extractQuestionLastElementNotInContent(question, '.comment', 'commentHtml');
+        if (question.commentHtml) {
+            // Remove the comment links.
+            question.commentHtml = self.removeCommentLinks(question.commentHtml);
+
+            if (!self.hasVisibleContent(question.commentHtml)) {
+                delete question.commentHtml;
+            }
+        }
     };
 
     /**
@@ -275,6 +283,34 @@ angular.module('mm.core.question')
     };
 
     /**
+     * Check if we have visible content in an HTML (content without accesshide class).
+     *
+     * @module mm.core.question
+     * @ngdoc method
+     * @name $mmQuestionHelper#hasVisibleContent
+     * @param  {String}  html HTML code.
+     * @return {Boolean}      True if html has visible content, false otherwise.
+     */
+    self.hasVisibleContent = function(html) {
+        if (!html) {
+            return false;
+        }
+
+        // Create a fake div element so we can search using querySelector.
+        var div = document.createElement('div'),
+            hidden;
+
+        div.innerHTML = html;
+        hidden = div.querySelectorAll('.accesshide');
+
+        angular.forEach(hidden, function(hiddenEl) {
+            hiddenEl.remove();
+        });
+
+        return !!div.innerHTML.trim();
+    };
+
+    /**
      * Generic link function for question directives with an input of type "text".
      *
      * @module mm.core.question
@@ -328,8 +364,8 @@ angular.module('mm.core.question')
         if (questionEl) {
             questionEl = questionEl[0] || questionEl; // Convert from jqLite to plain JS if needed.
 
-            // Find rows.
-            rows = questionEl.querySelectorAll('tr');
+            // Find rows. We only get the rows in the question formulation.
+            rows = questionEl.querySelectorAll('.formulation tr');
             if (!rows || !rows.length) {
                 log.warn('Aborting because couldn\'t find any row.', question.name);
                 return self.showDirectiveError(scope);
@@ -497,6 +533,51 @@ angular.module('mm.core.question')
                 return self.showDirectiveError(scope);
             });
         }
+    };
+
+    /**
+     * Remove links to comment on a question.
+     *
+     * @module mm.core.question
+     * @ngdoc method
+     * @name $mmQuestionHelper#removeCommentLink
+     * @param  {String} html HTML code.
+     * @return {Void}
+     */
+    self.removeCommentLinks = function(html) {
+        // Create a fake div element so we can search using querySelector.
+        var div = document.createElement('div'),
+            commentLinks;
+
+        div.innerHTML = html;
+
+        // Search all elements with class 'commentlink'.
+        commentLinks = div.querySelectorAll('.commentlink');
+        angular.forEach(commentLinks, function(link) {
+            // Remove all anchors to quiz comment.php.
+            var anchors;
+
+            if (link.tagName == 'A') {
+                anchors = [link];
+            } else {
+                anchors = link.querySelectorAll('a');
+            }
+
+            angular.forEach(anchors, function(anchor) {
+                if (anchor.href && anchor.href.indexOf('mod/quiz/comment.php') > -1) {
+                    anchor.remove();
+                }
+            });
+
+            if (link.tagName != 'A') {
+                // Check if the commentlink is empty. If so, delete it.
+                if (!link.innerHTML.trim()) {
+                    link.remove();
+                }
+            }
+        });
+
+        return div.innerHTML.trim();
     };
 
     /**

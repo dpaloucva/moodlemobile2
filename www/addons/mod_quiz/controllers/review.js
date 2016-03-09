@@ -32,7 +32,6 @@ angular.module('mm.addons.mod_quiz')
         quiz,
         options,
         attempt,
-        errorPasing = false,
         scrollView = $ionicScrollDelegate.$getByHandle('mmaModQuizReviewScroll');
 
     $scope.isReview = true;
@@ -182,10 +181,8 @@ angular.module('mm.addons.mod_quiz')
 
     // Function to call when an error parsing the questions occur.
     $scope.abortQuiz = function() {
-        if (!errorPasing) {
-            errorPasing = true;
-            $mmUtil.showErrorModal('mma.mod_quiz.errorparsequestions', true);
-        }
+        // Do nothing, we'll show the review even if there's some error in a question.
+        // The question should've already shown an error because of this.
     };
 
     // Setup TOC popover.
