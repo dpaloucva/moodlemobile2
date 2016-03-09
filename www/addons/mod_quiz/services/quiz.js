@@ -572,7 +572,7 @@ angular.module('mm.addons.mod_quiz')
                     cacheKey: getGradeFromGradebookCacheKey(courseId, userId)
                 };
 
-            return $mmSite.read('gradereport_user_get_grades_table', params, preSets).then(function(response) {
+            return site.read('gradereport_user_get_grades_table', params, preSets).then(function(response) {
                 // Search the module we're looking for.
                 var quizEntry,
                     regex = /href="([^"]*\/mod\/quiz\/[^"|^\.]*\.php[^"]*)/, // Find href containing "/mod/quiz/xxx.php".

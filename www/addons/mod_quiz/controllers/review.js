@@ -22,7 +22,7 @@ angular.module('mm.addons.mod_quiz')
  * @name mmaModQuizReviewCtrl
  */
 .controller('mmaModQuizReviewCtrl', function($log, $scope, $stateParams, $mmaModQuiz, $mmaModQuizHelper, $mmUtil,
-            $ionicPopover, $ionicScrollDelegate, $translate, $q, mmaModQuizAttemptComponent) {
+            $ionicPopover, $ionicScrollDelegate, $translate, $q, $mmSite, $mmUser, mmaModQuizAttemptComponent) {
     $log = $log.getInstance('mmaModQuizReviewCtrl');
 
     var quizId = $stateParams.quizid,
@@ -32,7 +32,8 @@ angular.module('mm.addons.mod_quiz')
         quiz,
         options,
         attempt,
-        scrollView = $ionicScrollDelegate.$getByHandle('mmaModQuizReviewScroll');
+        scrollView = $ionicScrollDelegate.$getByHandle('mmaModQuizReviewScroll'),
+        extraDataFetched = false;
 
     $scope.isReview = true;
     $scope.component = mmaModQuizAttemptComponent;
@@ -43,13 +44,8 @@ angular.module('mm.addons.mod_quiz')
         return $mmaModQuiz.getQuizById(courseId, quizId).then(function(quizData) {
             quiz = quizData;
 
-            return $mmaModQuiz.getCombinedReviewOptions(quiz.id).then(function(result) {
-                options = result;
-
-                // Load questions.
-                return loadPage(currentPage);
-            });
-
+            // Load questions.
+            return loadPage(currentPage);
         }).catch(function(message) {
             return $mmaModQuizHelper.showError(message);
         });
@@ -58,25 +54,65 @@ angular.module('mm.addons.mod_quiz')
     // Load a review page.
     function loadPage(page) {
         return $mmaModQuiz.getAttemptReview(attemptId, page).then(function(reviewData) {
+            var promise;
+
             currentPage = page;
             attempt = reviewData.attempt;
 
-            // Set the summary data.
-            setSummaryCalculatedData(reviewData);
+            promise = extraDataFetched ? $q.when() : fetchExtraData();
+            return promise.then(function() {
+                extraDataFetched = true;
 
-            $scope.attempt = attempt;
-            $scope.questions = reviewData.questions;
-            $scope.toc = $mmaModQuiz.getTocFromLayout(attempt.layout);
-            $scope.nextPage = page == -1 ? undefined : page + 1;
-            $scope.previousPage = page - 1;
-            attempt.currentpage = page;
+                // Set the summary data.
+                setSummaryCalculatedData(reviewData);
 
-            angular.forEach($scope.questions, function(question) {
-                // Get the readable mark for each question.
-                question.readableMark = $mmaModQuizHelper.getQuestionMarkFromHtml(question.html);
-                // Remove the question info box so it's not in the question HTML anymore.
-                question.html = $mmUtil.removeElementFromHtml(question.html, '.info');
+                $scope.attempt = attempt;
+                $scope.questions = reviewData.questions;
+                $scope.toc = $mmaModQuiz.getTocFromLayout(attempt.layout);
+                $scope.nextPage = page == -1 ? undefined : page + 1;
+                $scope.previousPage = page - 1;
+                attempt.currentpage = page;
+
+                angular.forEach($scope.questions, function(question) {
+                    // Get the readable mark for each question.
+                    question.readableMark = $mmaModQuizHelper.getQuestionMarkFromHtml(question.html);
+                    // Remove the question info box so it's not in the question HTML anymore.
+                    question.html = $mmUtil.removeElementFromHtml(question.html, '.info');
+                });
             });
+        });
+    }
+
+    // Convenience function to fetch review options and user data.
+    function fetchExtraData() {
+        if (!quiz || !attempt) {
+            return $q.reject();
+        }
+
+        var siteId = $mmSite.getId(),
+            userId = attempt.userid;
+
+        // Get combined review options.
+        return $mmaModQuiz.getCombinedReviewOptions(quiz.id, siteId, userId).then(function(result) {
+            options = result;
+
+            var promises = [];
+
+            if (userId != $mmSite.getUserId()) {
+                // Reviewing another user's attempt.
+
+                // Fetch user data.
+                promises.push($mmUser.getProfile(userId, courseId, true).then(function(user) {
+                    $scope.user = user;
+                }));
+
+                // Fetch user attempts.
+                promises.push($mmaModQuiz.getUserAttempts(quizId, undefined, true, false, siteId, userId).then(function(attempts) {
+                    $scope.attempts = attempts;
+                }));
+
+                return $q.all(promises);
+            }
         });
     }
 
@@ -136,12 +172,20 @@ angular.module('mm.addons.mod_quiz')
 
     // Refreshes data.
     function refreshData() {
-        var promises = [];
+        var promises = [],
+            siteId = $mmSite.getId();
+
         promises.push($mmaModQuiz.invalidateQuizData(courseId));
-        promises.push($mmaModQuiz.invalidateCombinedReviewOptionsForUser(quizId));
         promises.push($mmaModQuiz.invalidateAttemptReview(attemptId));
+        if (attempt) {
+            promises.push($mmaModQuiz.invalidateCombinedReviewOptionsForUser(quizId, siteId, attempt.userid));
+            if (attempt.userid != $mmSite.getUserId()) {
+                promises.push($mmaModQuiz.invalidateUserAttemptsForUser(quizId, siteId, attempt.userid));
+            }
+        }
 
         return $q.all(promises).finally(function() {
+            extraDataFetched = false;
             return fetchData();
         });
     }
@@ -183,6 +227,15 @@ angular.module('mm.addons.mod_quiz')
     $scope.abortQuiz = function() {
         // Do nothing, we'll show the review even if there's some error in a question.
         // The question should've already shown an error because of this.
+    };
+
+    // Load another attempt in the same quiz.
+    $scope.loadAttempt = function(id) {
+        attemptId = id;
+        currentPage = undefined;
+        extraDataFetched = false;
+
+        $scope.loadPage(-1);
     };
 
     // Setup TOC popover.

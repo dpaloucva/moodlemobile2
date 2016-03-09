@@ -13,6 +13,17 @@
                     <h2 ng-if="attempt.preview">{{ 'mma.mod_quiz.reviewofpreview' | translate }}</h2>
                     <h2 ng-if="!attempt.preview">{{ 'mma.mod_quiz.reviewofattempt' | translate:{$a: attempt.attempt} }}</h2>
                 </div>
+                <div class="item item-avatar" ng-if="user">
+                    <img ng-if="user.profileimageurl" ng-src="{{user.profileimageurl}}" mm-external-content alt="" role="presentation">
+                    <img ng-if="!user.profileimageurl" src="img/user-avatar.png" alt="" role="presentation">
+                    <h2><mm-format-text watch="true" clean="true">{{user.fullname}}</mm-format-text></h2>
+                </div>
+                <div class="item item-text-wrap" ng-if="attempts && attempts.length">
+                    <p class="item-heading">{{ 'mma.mod_quiz.attempts' | translate }}</p>
+                    <p>
+                        <button ng-repeat="att in attempts" class="button" ng-click="loadAttempt(att.id)" ng-disabled="att.attempt == attempt.attempt" ng-class='{"activated": att.attempt == attempt.attempt}'>{{ att.attempt }}</button>
+                    </p>
+                </div>
                 <div class="item item-text-wrap">
                     <p class="item-heading">{{ 'mma.mod_quiz.startedon' | translate }}</p>
                     <p>{{ attempt.timestart * 1000 | mmFormatDate:"dfmediumdate" }}</p>
