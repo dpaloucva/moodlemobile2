@@ -17,3 +17,8 @@
 <div class="item item-text-wrap mm-question-comment" ng-if="question.commentHtml">
 	<p><mm-format-text watch="true" class="mm-content-with-float">{{ question.commentHtml }}</mm-format-text></p>
 </div>
+<!-- Question history -->
+<div class="item item-text-wrap" ng-if="question.historyHtml">
+	<p class="item-heading">{{ 'mm.question.responsehistory' | translate }}</p>
+	<p><mm-format-text watch="true" class="mm-content-with-float">{{ question.historyHtml }}</mm-format-text></p>
+</div>

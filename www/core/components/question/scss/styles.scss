@@ -1,4 +1,6 @@
 
+$mm-question-alternate-color:     #fbfbfb !default;
+
 .mm-question-textarea {
   width: 100%;
   height: 250px;
@@ -56,4 +58,17 @@ li.mm-question-answer-incorrect,
 
 .mm-question-feedback-padding {
   padding: 8px 35px 8px 14px;
+}
+
+.mm-question-history-table {
+  width: 100%;
+  text-align: left;
+
+  th, .current {
+    font-weight: bold;
+  }
+
+  tbody .row:nth-child(odd) {
+    background-color: $mm-question-alternate-color;
+  }
 }

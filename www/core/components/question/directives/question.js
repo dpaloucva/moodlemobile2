@@ -71,9 +71,10 @@ angular.module('mm.core.question')
                     }
 
                     if (scope.review) {
-                        // If we're in review mode, try to extract the feedback and comment for the question.
+                        // If we're in review mode, try to extract the feedback, comment and history for the question.
                         $mmQuestionHelper.extractQuestionFeedback(question);
                         $mmQuestionHelper.extractQuestionComment(question);
+                        $mmQuestionHelper.extractQuestionHistory(question);
                     }
 
                     // Add the directive to the element.

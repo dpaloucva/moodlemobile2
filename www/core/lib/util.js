@@ -1099,6 +1099,30 @@ angular.module('mm.core')
         };
 
         /**
+         * Search for certain elements and add one or more classes to it.
+         *
+         * @module mm.core
+         * @ngdoc method
+         * @name $mmUtil#addClassesToAllOccurrences
+         * @param  {Object} element  DOM element.
+         * @param  {String} selector Selector to find elements.
+         * @param  {String} classes  Classes to add.
+         * @return {Void}
+         */
+        self.addClassesToAllOccurrences = function(element, selector, classes) {
+            if (!classes) {
+                return;
+            }
+
+            element = element[0] || element; // Convert from jqLite to plain JS if needed.
+
+            angular.forEach(element.querySelectorAll(selector), function(match) {
+                match = angular.element(match);
+                match.addClass(classes);
+            });
+        };
+
+        /**
          * Scroll to a certain element inside another element.
          *
          * @module mm.core

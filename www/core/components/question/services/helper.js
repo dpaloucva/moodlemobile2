@@ -21,7 +21,7 @@ angular.module('mm.core.question')
  * @ngdoc service
  * @name $mmQuestionHelper
  */
-.factory('$mmQuestionHelper', function($mmUtil, $mmText, $ionicModal) {
+.factory('$mmQuestionHelper', function($mmUtil, $mmText, $ionicModal, $ionicPlatform) {
 
     var self = {},
         lastErrorShown = 0;
@@ -90,6 +90,50 @@ angular.module('mm.core.question')
      */
     self.extractQuestionFeedback = function(question) {
         extractQuestionLastElementNotInContent(question, '.outcome', 'feedbackHtml');
+    };
+
+    /**
+     * Removes the history from the question HTML code and adds it in a new "historyHtml" property.
+     * The history HTML code is treated so it's rendered ok in the app.
+     *
+     * @module mm.core.question
+     * @ngdoc method
+     * @name $mmQuestionHelper#extractQuestionHistory
+     * @param  {Object} question Question.
+     * @return {Void}
+     */
+    self.extractQuestionHistory = function(question) {
+        var table,
+            matches;
+
+        extractQuestionLastElementNotInContent(question, '.history table', 'historyHtml');
+        if (question.historyHtml) {
+            // Treat the history.
+            table = document.createElement('table');
+            table.innerHTML = question.historyHtml;
+
+            angular.element(table).addClass('mm-question-history-table');
+
+            if (!$ionicPlatform.isTablet()) {
+                // In smartphone we remove all columns except 1 and 3 since we lack space to render them all.
+                matches = table.querySelectorAll('th:nth-child(2), th:nth-child(n+4), td:nth-child(2), td:nth-child(n+4)');
+                angular.forEach(matches, function(match) {
+                    match.remove();
+                });
+
+                // Make first column (step) narrower.
+                $mmUtil.addClassesToAllOccurrences(table, 'th:first-child, td:first-child', 'col-25');
+            } else {
+                // In tablet we'll give more space to the "action" column.
+                $mmUtil.addClassesToAllOccurrences(table, 'th:nth-child(3), td:nth-child(3)', 'col-50');
+            }
+
+            // Add 'row' and 'col' classes.
+            $mmUtil.addClassesToAllOccurrences(table, 'tr', 'row');
+            $mmUtil.addClassesToAllOccurrences(table, 'th, td', 'col');
+
+            question.historyHtml = table.outerHTML;
+        }
     };
 
     /**
