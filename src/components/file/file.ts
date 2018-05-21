@@ -100,7 +100,8 @@ export class CoreFileComponent implements OnInit, OnDestroy {
      */
     protected calculateState(): Promise<void> {
         return this.filepoolProvider.getFileStateByUrl(this.siteId, this.fileUrl, this.timemodified).then((state) => {
-            const canDownload = this.sitesProvider.getCurrentSite().canDownloadFiles();
+            const currentSite = this.sitesProvider.getCurrentSite(),
+                canDownload = currentSite.canDownloadFiles() && !currentSite.isOfflineDisabled();
 
             this.state = state;
             this.isDownloaded = state === CoreConstants.DOWNLOADED || state === CoreConstants.OUTDATED;

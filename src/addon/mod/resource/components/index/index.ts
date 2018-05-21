@@ -95,12 +95,19 @@ export class AddonModResourceIndexComponent extends CoreCourseModuleMainResource
             }
 
             if (this.resourceHelper.isDisplayedInIframe(this.module)) {
-                let downloadFailed = false;
+                let downloadFailed = false,
+                    promise;
 
-                return this.prefetchHandler.download(this.module, this.courseId).catch(() => {
-                    // Mark download as failed but go on since the main files could have been downloaded.
-                    downloadFailed = true;
-                }).then(() => {
+                if (this.isOfflineDisabled()) {
+                    promise = Promise.resolve();
+                } else {
+                    promise = this.prefetchHandler.download(this.module, this.courseId).catch(() => {
+                        // Mark download as failed but go on since the main files could have been downloaded.
+                        downloadFailed = true;
+                    });
+                }
+
+                return promise.then(() => {
                     return this.resourceHelper.getIframeSrc(this.module).then((src) => {
                         this.mode = 'iframe';
 

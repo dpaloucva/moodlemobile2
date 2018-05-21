@@ -113,16 +113,21 @@ export class AddonModBookIndexComponent extends CoreCourseModuleMainResourceComp
             // Ignore errors since this WS isn't available in some Moodle versions.
         }));
 
-        // Download content. This function also loads module contents if needed.
-        promises.push(this.prefetchDelegate.download(this.module, this.courseId).catch(() => {
-            // Mark download as failed but go on since the main files could have been downloaded.
-            downloadFailed = true;
+        if (!this.isOfflineDisabled()) {
+            // Download content. This function also loads module contents if needed.
+            promises.push(this.prefetchDelegate.download(this.module, this.courseId).catch(() => {
+                // Mark download as failed but go on since the main files could have been downloaded.
+                downloadFailed = true;
 
-            if (!this.module.contents.length) {
-                // Try to load module contents for offline usage.
-                return this.courseProvider.loadModuleContents(this.module, this.courseId);
-            }
-        }));
+                if (!this.module.contents.length) {
+                    // Try to load module contents for offline usage.
+                    return this.courseProvider.loadModuleContents(this.module, this.courseId);
+                }
+            }));
+        } else {
+            // Offline is disabled, just load the module contents.
+            promises.push(this.courseProvider.loadModuleContents(this.module, this.courseId));
+        }
 
         return Promise.all(promises).then(() => {
             this.contentsMap = this.bookProvider.getContentsMap(this.module.contents);

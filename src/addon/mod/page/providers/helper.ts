@@ -70,7 +70,7 @@ export class AddonModPageHelperProvider {
             // If ever that happens.
             this.logger.debug('Could not locate the index page');
             promise = Promise.reject(null);
-        } else if (this.fileProvider.isAvailable()) {
+        } else if (this.fileProvider.isAvailable() && !this.sitesProvider.getCurrentSite().isOfflineDisabled()) {
             // The file system is available.
             promise = this.filepoolProvider.downloadUrl(this.sitesProvider.getCurrentSiteId(), indexUrl, false,
                 AddonModPageProvider.COMPONENT, moduleId);

@@ -152,6 +152,8 @@ export class AddonModScormIndexComponent extends CoreCourseModuleMainActivityCom
             const result = this.scormProvider.isScormUnsupported(this.scorm);
             if (result) {
                 this.errorMessage = result;
+            } else if (this.isOfflineDisabled()) {
+                this.errorMessage = 'addon.mod_scorm.errorofflinedisabled';
             } else {
                 this.errorMessage = '';
             }

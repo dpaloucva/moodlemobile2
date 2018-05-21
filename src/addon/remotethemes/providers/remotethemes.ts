@@ -147,7 +147,7 @@ export class AddonRemoteThemesProvider {
             if (infos && infos.mobilecssurl) {
                 fileUrl = infos.mobilecssurl;
 
-                if (this.fileProvider.isAvailable()) {
+                if (this.fileProvider.isAvailable() && !site.isOfflineDisabled()) {
                     // The file system is available. Download the file and remove old CSS files if needed.
                     promise = this.downloadFileAndRemoveOld(siteId, fileUrl);
                 } else {

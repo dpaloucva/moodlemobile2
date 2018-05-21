@@ -46,6 +46,7 @@ export class CoreCoursesCoursePreviewPage implements OnDestroy {
         title: 'core.course.downloadcourse'
     };
     downloadCourseEnabled: boolean;
+    canDownload: boolean;
 
     protected guestWSAvailable: boolean;
     protected isGuestEnabled = false;
@@ -73,8 +74,9 @@ export class CoreCoursesCoursePreviewPage implements OnDestroy {
         this.isMobile = appProvider.isMobile();
         this.isDesktop = appProvider.isDesktop();
         this.downloadCourseEnabled = !this.coursesProvider.isDownloadCourseDisabledInSite();
+        this.canDownload = !this.sitesProvider.getCurrentSite().isOfflineDisabled();
 
-        if (this.downloadCourseEnabled) {
+        if (this.downloadCourseEnabled && this.canDownload) {
             // Listen for status change in course.
             this.courseStatusObserver = this.eventsProvider.on(CoreEventsProvider.COURSE_STATUS_CHANGED, (data) => {
                 if (data.courseId == this.course.id) {
@@ -106,7 +108,7 @@ export class CoreCoursesCoursePreviewPage implements OnDestroy {
         });
 
         this.getCourse().finally(() => {
-            if (!this.downloadCourseEnabled) {
+            if (!this.downloadCourseEnabled || !this.canDownload) {
                 // Cannot download the whole course, stop.
                 return;
             }

@@ -232,7 +232,7 @@ export class AddonModImscpProvider {
         return this.filepoolProvider.getPackageDirUrlByUrl(siteId, module.url).then((dirPath) => {
             return this.textUtils.concatenatePaths(dirPath, itemHref);
         }).catch(() => {
-            // Error getting directory, there was an error downloading or we're in browser. Return online URL if connected.
+            // Error getting directory, there was an error downloading or offline is disabled. Return online URL if connected.
             if (this.appProvider.isOnline()) {
                 const indexUrl = this.getFileUrlFromContents(module.contents, itemHref);
 

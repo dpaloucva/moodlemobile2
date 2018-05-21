@@ -82,17 +82,22 @@ export class AddonModImscpIndexComponent extends CoreCourseModuleMainResourceCom
             this.dataRetrieved.emit(imscp);
         }));
 
-        promises.push(this.imscpPrefetch.download(this.module, this.courseId).catch(() => {
-            // Mark download as failed but go on since the main files could have been downloaded.
-            downloadFailed = true;
+        if (!this.isOfflineDisabled()) {
+            promises.push(this.imscpPrefetch.download(this.module, this.courseId).catch(() => {
+                // Mark download as failed but go on since the main files could have been downloaded.
+                downloadFailed = true;
 
-            return this.courseProvider.loadModuleContents(this.module, this.courseId).catch((error) => {
-                // Error getting module contents, fail.
-                this.domUtils.showErrorModalDefault(error, 'core.course.errorgetmodule', true);
+                return this.courseProvider.loadModuleContents(this.module, this.courseId).catch((error) => {
+                    // Error getting module contents, fail.
+                    this.domUtils.showErrorModalDefault(error, 'core.course.errorgetmodule', true);
 
-                return Promise.reject(null);
-            });
-        }));
+                    return Promise.reject(null);
+                });
+            }));
+        } else {
+            // Offline is disabled, just load the module contents.
+            promises.push(this.courseProvider.loadModuleContents(this.module, this.courseId));
+        }
 
         return Promise.all(promises).then(() => {
             this.items = this.imscpProvider.createItemList(this.module.contents);

@@ -17,6 +17,7 @@
     "errorinvalidversion": "Sorry, the application only supports SCORM 1.2.",
     "errornotdownloadable": "The download of SCORM packages is disabled. Please contact your site administrator.",
     "errornovalidsco": "This SCORM package doesn't have a visible SCO to load.",
+    "errorofflinedisabled": "The SCORM cannot be attempted in the app because offline mode is disabled in your site.",
     "errorpackagefile": "Sorry, the application only supports ZIP packages.",
     "errorsyncscorm": "An error occurred while synchronising. Please try again.",
     "exceededmaxattempts": "You have reached the maximum number of attempts.",

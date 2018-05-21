@@ -14,6 +14,7 @@
 
 import { OnInit, OnDestroy, Input, Output, EventEmitter, Injector } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { CoreSitesProvider } from '@providers/sites';
 import { CoreDomUtilsProvider } from '@providers/utils/dom';
 import { CoreTextUtilsProvider } from '@providers/utils/text';
 import { CoreCourseHelperProvider } from '@core/course/providers/helper';
@@ -50,6 +51,7 @@ export class CoreCourseModuleMainResourceComponent implements OnInit, OnDestroy,
     protected textUtils: CoreTextUtilsProvider;
     protected courseHelper: CoreCourseHelperProvider;
     protected translate: TranslateService;
+    protected sitesProvider: CoreSitesProvider;
     protected domUtils: CoreDomUtilsProvider;
     protected moduleDelegate: CoreCourseModuleDelegate;
     protected courseSectionPage: CoreCourseSectionPage;
@@ -58,6 +60,7 @@ export class CoreCourseModuleMainResourceComponent implements OnInit, OnDestroy,
         this.textUtils = injector.get(CoreTextUtilsProvider);
         this.courseHelper = injector.get(CoreCourseHelperProvider);
         this.translate = injector.get(TranslateService);
+        this.sitesProvider = injector.get(CoreSitesProvider);
         this.domUtils = injector.get(CoreDomUtilsProvider);
         this.moduleDelegate = injector.get(CoreCourseModuleDelegate);
         this.courseSectionPage = injector.get(CoreCourseSectionPage, null);
@@ -131,6 +134,15 @@ export class CoreCourseModuleMainResourceComponent implements OnInit, OnDestroy,
      */
     protected invalidateContent(): Promise<any> {
         return Promise.resolve();
+    }
+
+    /**
+     * Check whether offline is disabled in current site.
+     *
+     * @return {boolean} Whether offline is disabled in current site.
+     */
+    protected isOfflineDisabled(): boolean {
+        return this.sitesProvider.getCurrentSite().isOfflineDisabled();
     }
 
     /**

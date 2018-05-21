@@ -62,29 +62,36 @@ export class CoreFileHelperProvider {
                         return Promise.reject(error);
                     }
 
-                    // Get the state.
-                    if (state) {
-                        return state;
-                    } else {
-                        return this.filepoolProvider.getFileStateByUrl(siteId, fileUrl, timemodified);
-                    }
-                }).then((state) => {
-                    if (state == CoreConstants.DOWNLOADING) {
-                        return Promise.reject(this.translate.instant('core.erroropenfiledownloading'));
-                    }
+                    // Check if site allows offline files.
+                    return this.sitesProvider.getSite(siteId).then((site) => {
+                        if (site.isOfflineDisabled()) {
+                            return Promise.reject(error);
+                        }
 
-                    let promise;
+                        // Get the state.
+                        if (state) {
+                            return state;
+                        } else {
+                            return this.filepoolProvider.getFileStateByUrl(siteId, fileUrl, timemodified);
+                        }
+                    }).then((state) => {
+                        if (state == CoreConstants.DOWNLOADING) {
+                            return Promise.reject(this.translate.instant('core.erroropenfiledownloading'));
+                        }
 
-                    if (state === CoreConstants.NOT_DOWNLOADED) {
-                        // File is not downloaded, download and then return the local URL.
-                        promise = this.downloadFile(fileUrl, component, componentId, timemodified, onProgress, file, siteId);
-                    } else {
-                        // File is outdated and can't be opened in online, return the local URL.
-                        promise = this.filepoolProvider.getInternalUrlByUrl(siteId, fileUrl);
-                    }
+                        let promise;
 
-                    return promise.then((url) => {
-                        return this.utils.openFile(url);
+                        if (state === CoreConstants.NOT_DOWNLOADED) {
+                            // File is not downloaded, download and then return the local URL.
+                            promise = this.downloadFile(fileUrl, component, componentId, timemodified, onProgress, file, siteId);
+                        } else {
+                            // File is outdated and can't be opened in online, return the local URL.
+                            promise = this.filepoolProvider.getInternalUrlByUrl(siteId, fileUrl);
+                        }
+
+                        return promise.then((url) => {
+                            return this.utils.openFile(url);
+                        });
                     });
                 });
             } else {
@@ -113,7 +120,7 @@ export class CoreFileHelperProvider {
         return this.sitesProvider.getSite(siteId).then((site) => {
             const fixedUrl = site.fixPluginfileURL(fileUrl);
 
-            if (this.fileProvider.isAvailable()) {
+            if (this.fileProvider.isAvailable() && !site.isOfflineDisabled()) {
                 let promise;
                 if (state) {
                     promise = Promise.resolve(state);

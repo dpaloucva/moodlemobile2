@@ -38,6 +38,7 @@ export class CoreCoursesMyCoursesPage implements OnDestroy {
     coursesLoaded = false;
     prefetchCoursesData: any = {};
     downloadAllCoursesEnabled: boolean;
+    canDownload: boolean;
 
     protected prefetchIconInitialized = false;
     protected myCoursesObserver;
@@ -55,6 +56,7 @@ export class CoreCoursesMyCoursesPage implements OnDestroy {
     ionViewDidLoad(): void {
         this.searchEnabled = !this.coursesProvider.isSearchCoursesDisabledInSite();
         this.downloadAllCoursesEnabled = !this.coursesProvider.isDownloadCoursesDisabledInSite();
+        this.canDownload = !this.sitesProvider.getCurrentSite().isOfflineDisabled();
 
         this.fetchCourses().finally(() => {
             this.coursesLoaded = true;
@@ -66,12 +68,13 @@ export class CoreCoursesMyCoursesPage implements OnDestroy {
 
         // Refresh the enabled flags if site is updated.
         this.siteUpdatedObserver = this.eventsProvider.on(CoreEventsProvider.SITE_UPDATED, () => {
-            const wasEnabled = this.downloadAllCoursesEnabled;
+            const wasEnabled = this.downloadAllCoursesEnabled && this.canDownload;
 
             this.searchEnabled = !this.coursesProvider.isSearchCoursesDisabledInSite();
             this.downloadAllCoursesEnabled = !this.coursesProvider.isDownloadCoursesDisabledInSite();
+            this.canDownload = !this.sitesProvider.getCurrentSite().isOfflineDisabled();
 
-            if (!wasEnabled && this.downloadAllCoursesEnabled && this.coursesLoaded) {
+            if (!wasEnabled && this.downloadAllCoursesEnabled && this.coursesLoaded && this.canDownload) {
                 // Download all courses is enabled now, initialize it.
                 this.initPrefetchCoursesIcon();
             }
@@ -187,7 +190,7 @@ export class CoreCoursesMyCoursesPage implements OnDestroy {
      * Initialize the prefetch icon for the list of courses.
      */
     protected initPrefetchCoursesIcon(): void {
-        if (this.prefetchIconInitialized || !this.downloadAllCoursesEnabled) {
+        if (this.prefetchIconInitialized || !this.downloadAllCoursesEnabled || !this.canDownload) {
             // Already initialized.
             return;
         }

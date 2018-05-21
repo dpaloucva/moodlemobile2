@@ -43,6 +43,7 @@ export class CoreCoursesCourseProgressComponent implements OnInit, OnDestroy {
         title: 'core.course.downloadcourse'
     };
     downloadCourseEnabled: boolean;
+    canDownload: boolean;
 
     protected isDestroyed = false;
     protected courseStatusObserver;
@@ -58,18 +59,20 @@ export class CoreCoursesCourseProgressComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.downloadCourseEnabled = !this.coursesProvider.isDownloadCourseDisabledInSite();
+        this.canDownload = !this.sitesProvider.getCurrentSite().isOfflineDisabled();
 
-        if (this.downloadCourseEnabled) {
+        if (this.downloadCourseEnabled && this.canDownload) {
             this.initPrefetchCourse();
         }
 
         // Refresh the enabled flag if site is updated.
         this.siteUpdatedObserver = this.eventsProvider.on(CoreEventsProvider.SITE_UPDATED, () => {
-            const wasEnabled = this.downloadCourseEnabled;
+            const wasEnabled = this.downloadCourseEnabled && this.canDownload;
 
             this.downloadCourseEnabled = !this.coursesProvider.isDownloadCourseDisabledInSite();
+            this.canDownload = !this.sitesProvider.getCurrentSite().isOfflineDisabled();
 
-            if (!wasEnabled && this.downloadCourseEnabled) {
+            if (!wasEnabled && this.downloadCourseEnabled && this.canDownload) {
                 // Download course is enabled now, initialize it.
                 this.initPrefetchCourse();
             }

@@ -66,6 +66,7 @@ export class CoreCoursesMyOverviewPage implements OnDestroy {
         future: {}
     };
     downloadAllCoursesEnabled: boolean;
+    canDownload: boolean;
 
     protected prefetchIconsInitialized = false;
     protected isDestroyed;
@@ -84,15 +85,17 @@ export class CoreCoursesMyOverviewPage implements OnDestroy {
     ionViewDidLoad(): void {
         this.searchEnabled = !this.coursesProvider.isSearchCoursesDisabledInSite();
         this.downloadAllCoursesEnabled = !this.coursesProvider.isDownloadCoursesDisabledInSite();
+        this.canDownload = !this.sitesProvider.getCurrentSite().isOfflineDisabled();
 
         // Refresh the enabled flags if site is updated.
         this.updateSiteObserver = this.eventsProvider.on(CoreEventsProvider.SITE_UPDATED, () => {
-            const wasEnabled = this.downloadAllCoursesEnabled;
+            const wasEnabled = this.downloadAllCoursesEnabled && this.canDownload;
 
             this.searchEnabled = !this.coursesProvider.isSearchCoursesDisabledInSite();
             this.downloadAllCoursesEnabled = !this.coursesProvider.isDownloadCoursesDisabledInSite();
+            this.canDownload = !this.sitesProvider.getCurrentSite().isOfflineDisabled();
 
-            if (!wasEnabled && this.downloadAllCoursesEnabled && this.courses.loaded) {
+            if (!wasEnabled && this.downloadAllCoursesEnabled && this.courses.loaded && this.canDownload) {
                 // Download all courses is enabled now, initialize it.
                 this.initPrefetchCoursesIcons();
             }
@@ -397,7 +400,7 @@ export class CoreCoursesMyOverviewPage implements OnDestroy {
      * Initialize the prefetch icon for selected courses.
      */
     protected initPrefetchCoursesIcons(): void {
-        if (this.prefetchIconsInitialized || !this.downloadAllCoursesEnabled) {
+        if (this.prefetchIconsInitialized || !this.downloadAllCoursesEnabled || !this.canDownload) {
             // Already initialized.
             return;
         }

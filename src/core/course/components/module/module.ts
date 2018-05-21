@@ -75,7 +75,7 @@ export class CoreCourseModuleComponent implements OnInit, OnDestroy {
             this.module.handlerData = {};
         }
 
-        if (this.module.handlerData.showDownloadButton) {
+        if (this.module.handlerData.showDownloadButton && !this.sitesProvider.getCurrentSite().isOfflineDisabled()) {
             // Listen for changes on this module status, even if download isn't enabled.
             this.prefetchHandler = this.prefetchDelegate.getPrefetchHandlerFor(this.module);
 

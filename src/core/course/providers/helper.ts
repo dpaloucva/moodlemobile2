@@ -495,7 +495,7 @@ export class CoreCourseHelperProvider {
             }
 
             return this.sitesProvider.getSite(siteId);
-        }).then((site) => {
+        }).then((site: CoreSite) => {
             const mainFile = files[0],
                 fileUrl = this.fileHelper.getFileUrl(mainFile);
 
@@ -511,7 +511,7 @@ export class CoreCourseHelperProvider {
 
                     this.utils.openInBrowser(fixedUrl);
 
-                    if (this.fileProvider.isAvailable()) {
+                    if (this.fileProvider.isAvailable() && !site.isOfflineDisabled()) {
                         // Download the file if needed (file outdated or not downloaded).
                         // Download will be in background, don't return the promise.
                         this.downloadModule(module, courseId, component, componentId, files, siteId);
@@ -534,7 +534,7 @@ export class CoreCourseHelperProvider {
                 if (result.path.indexOf('http') === 0) {
                     return this.utils.openOnlineFile(result.path).catch((error) => {
                         // Error opening the file, some apps don't allow opening online files.
-                        if (!this.fileProvider.isAvailable()) {
+                        if (!this.fileProvider.isAvailable() || site.isOfflineDisabled()) {
                             return Promise.reject(error);
                         } else if (result.status === CoreConstants.DOWNLOADING) {
                             return Promise.reject(this.translate.instant('core.erroropenfiledownloading'));
@@ -597,7 +597,7 @@ export class CoreCourseHelperProvider {
             const fixedUrl = site.fixPluginfileURL(fileUrl);
             result.fixedUrl = fixedUrl;
 
-            if (this.fileProvider.isAvailable()) {
+            if (this.fileProvider.isAvailable() && !site.isOfflineDisabled()) {
                 // The file system is available.
                 return this.filepoolProvider.getPackageStatus(siteId, component, componentId).then((status) => {
                     result.status = status;
@@ -694,6 +694,14 @@ export class CoreCourseHelperProvider {
      * @return {Promise<any>} Promise resolved when done.
      */
     fillContextMenu(instance: any, module: any, courseId: number, invalidateCache?: boolean, component?: string): Promise<any> {
+        if (this.sitesProvider.getCurrentSite().isOfflineDisabled()) {
+            // Offline is disabled, don't display any data about download and size.
+            instance.size = 0;
+            instance.prefetchStatusIcon = '';
+
+            return Promise.resolve();
+        }
+
         return this.getModulePrefetchInfo(module, courseId, invalidateCache, component).then((moduleInfo) => {
             instance.size = moduleInfo.size > 0 ? moduleInfo.sizeReadable : 0;
             instance.prefetchStatusIcon = moduleInfo.statusIcon;

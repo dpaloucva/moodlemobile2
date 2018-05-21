@@ -56,6 +56,7 @@ export class CoreCourseSectionPage implements OnDestroy {
     moduleId: number;
     displayEnableDownload: boolean;
     displayRefresher: boolean;
+    canDownload: boolean;
 
     protected module: any;
     protected completionObserver;
@@ -77,6 +78,7 @@ export class CoreCourseSectionPage implements OnDestroy {
         this.title = courseFormatDelegate.getCourseTitle(this.course);
         this.displayEnableDownload = courseFormatDelegate.displayEnableDownload(this.course);
         this.downloadCourseEnabled = !this.coursesProvider.isDownloadCourseDisabledInSite();
+        this.canDownload = !sitesProvider.getCurrentSite().isOfflineDisabled();
 
         this.completionObserver = eventsProvider.on(CoreEventsProvider.COMPLETION_MODULE_VIEWED, (data) => {
             if (data && data.courseId == this.course.id) {
@@ -84,7 +86,7 @@ export class CoreCourseSectionPage implements OnDestroy {
             }
         });
 
-        if (this.downloadCourseEnabled) {
+        if (this.downloadCourseEnabled && this.canDownload) {
             // Listen for changes in course status.
             this.courseStatusObserver = eventsProvider.on(CoreEventsProvider.COURSE_STATUS_CHANGED, (data) => {
                 if (data.courseId == this.course.id) {
@@ -107,7 +109,7 @@ export class CoreCourseSectionPage implements OnDestroy {
         this.loadData().finally(() => {
             this.dataLoaded = true;
 
-            if (!this.downloadCourseEnabled) {
+            if (!this.downloadCourseEnabled || !this.canDownload) {
                 // Cannot download the whole course, stop.
                 return;
             }

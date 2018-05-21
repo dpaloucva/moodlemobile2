@@ -110,7 +110,7 @@ export class AddonModQuizIndexComponent extends CoreCourseModuleMainActivityComp
             return;
         }
 
-        if (this.quizProvider.isQuizOffline(this.quizData)) {
+        if (this.quizProvider.isQuizOffline(this.quizData) && !this.isOfflineDisabled()) {
             // Quiz supports offline, check if it needs to be downloaded.
             // If the site doesn't support check updates, always prefetch it because we cannot tell if there's something new.
             const isDownloaded = this.currentStatus == CoreConstants.DOWNLOADED;
@@ -139,7 +139,7 @@ export class AddonModQuizIndexComponent extends CoreCourseModuleMainActivityComp
                 this.openQuiz();
             }
         } else {
-            // Quiz isn't offline, just open it.
+            // Quiz isn't offline or offline is disabled, just open it.
             this.openQuiz();
         }
     }

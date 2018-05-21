@@ -70,18 +70,27 @@ export class AddonModPageIndexComponent extends CoreCourseModuleMainResourceComp
      * @return {Promise<any>} Promise resolved when done.
      */
     protected fetchContent(refresh?: boolean): Promise<any> {
-        let downloadFailed = false;
+        let downloadFailed = false,
+            promise;
 
-        // Download content. This function also loads module contents if needed.
-        return this.pagePrefetch.download(this.module, this.courseId).catch(() => {
-            // Mark download as failed but go on since the main files could have been downloaded.
-            downloadFailed = true;
-        }).then(() => {
-            if (!this.module.contents.length) {
-                // Try to load module contents for offline usage.
-                return this.courseProvider.loadModuleContents(this.module, this.courseId);
-            }
-        }).then(() => {
+        if (this.isOfflineDisabled()) {
+            // Offline is disabled, just load the module contents.
+            promise = this.courseProvider.loadModuleContents(this.module, this.courseId);
+        } else {
+
+            // Download content. This function also loads module contents if needed.
+            promise = this.pagePrefetch.download(this.module, this.courseId).catch(() => {
+                // Mark download as failed but go on since the main files could have been downloaded.
+                downloadFailed = true;
+            }).then(() => {
+                if (!this.module.contents.length) {
+                    // Try to load module contents for offline usage.
+                    return this.courseProvider.loadModuleContents(this.module, this.courseId);
+                }
+            });
+        }
+
+        return promise.then(() => {
             const promises = [];
 
             let getPagePromise;

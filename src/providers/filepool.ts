@@ -641,7 +641,7 @@ export class CoreFilepoolProvider {
         }
 
         return this.sitesProvider.getSite(siteId).then((site) => {
-            if (!site.canDownloadFiles()) {
+            if (!site.canDownloadFiles() || site.isOfflineDisabled()) {
                 return Promise.reject(null);
             }
 
@@ -953,11 +953,8 @@ export class CoreFilepoolProvider {
             }
 
             this.filePromises[siteId][downloadId] = this.sitesProvider.getSite(siteId).then((site) => {
-                if (!site.canDownloadFiles()) {
-                    return Promise.reject(null);
-                }
 
-                return this.wsProvider.downloadFile(fileUrl, filePath, addExtension, onProgress).then((fileEntry) => {
+                return site.downloadFile(fileUrl, filePath, addExtension, onProgress).then((fileEntry) => {
                     const data: CoreFilepoolFileEntry = poolFileObject || {};
 
                     data.downloadTime = Date.now();

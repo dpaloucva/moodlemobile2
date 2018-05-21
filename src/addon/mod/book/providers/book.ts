@@ -144,11 +144,11 @@ export class AddonModBookProvider {
             return Promise.reject(null);
         }
 
-        if (this.fileProvider.isAvailable()) {
+        if (this.fileProvider.isAvailable() && !this.sitesProvider.getCurrentSite().isOfflineDisabled()) {
             promise = this.filepoolProvider.downloadUrl(siteId, indexUrl, false, AddonModBookProvider.COMPONENT, moduleId);
         } else {
             // We return the live URL.
-            return Promise.resolve(this.sitesProvider.getCurrentSite().fixPluginfileURL(indexUrl));
+            promise = Promise.resolve(this.sitesProvider.getCurrentSite().fixPluginfileURL(indexUrl));
         }
 
         return promise.then((url) => {
