@@ -19,7 +19,6 @@ import { CoreFile } from '@services/file';
 import { CoreUtils } from '@services/utils/utils';
 import { CoreLogger } from '@singletons/logger';
 import { FileMock } from './file';
-import { FileTransferErrorMock } from './file-transfer';
 
 /**
  * Helper service for the emulator feature. It also acts as an init handler.
@@ -42,8 +41,6 @@ export class CoreEmulatorHelperProvider {
      */
     load(): Promise<void> {
         const promises: Promise<unknown>[] = [];
-
-        window.FileTransferError = FileTransferErrorMock;
 
         promises.push((<FileMock> this.file).load().then((basePath: string) => {
             CoreFile.setHTMLBasePath(basePath);

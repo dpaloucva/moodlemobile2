@@ -16,7 +16,6 @@ import { Injectable } from '@angular/core';
 import { HttpResponse, HttpParams } from '@angular/common/http';
 
 import { FileEntry } from '@ionic-native/file';
-import { FileUploadOptions } from '@ionic-native/file-transfer/ngx';
 import { Md5 } from 'ts-md5/dist/md5';
 import { Observable } from 'rxjs';
 import { timeout } from 'rxjs/operators';
@@ -30,13 +29,14 @@ import { CoreUtils, PromiseDefer } from '@services/utils/utils';
 import { CoreConstants } from '@/core/constants';
 import { CoreError } from '@classes/errors/error';
 import { CoreInterceptor } from '@classes/interceptor';
-import { makeSingleton, Translate, FileTransfer, Http, Platform, NativeHttp } from '@singletons';
+import { makeSingleton, Translate, Http, Platform, NativeHttp } from '@singletons';
 import { CoreArray } from '@singletons/array';
 import { CoreLogger } from '@singletons/logger';
 import { CoreWSError } from '@classes/errors/wserror';
 import { CoreAjaxError } from '@classes/errors/ajaxerror';
 import { CoreAjaxWSError } from '@classes/errors/ajaxwserror';
 import { CoreNetworkError } from '@classes/errors/network-error';
+import { FileTransfer, FileUploadOptions } from '@singletons/file-transfer';
 
 /**
  * This service allows performing WS calls and download/upload files.
@@ -265,7 +265,7 @@ export class CoreWSProvider {
             onProgress && transfer.onProgress(onProgress);
 
             // Download the file in the tmp file.
-            await transfer.download(url, fileEntry.toURL(), true);
+            await transfer.download(url, fileEntry.toURL());
 
             let extension = '';
 
@@ -838,20 +838,20 @@ export class CoreWSProvider {
         options.params = {
             token: preSets.wsToken,
             filearea: options.fileArea || 'draft',
-            itemid: options.itemId || 0,
+            itemid: String(options.itemId || 0),
         };
         options.chunkedMode = false;
         options.headers = {};
         options['Connection'] = 'close';
 
         try {
-            const success = await transfer.upload(filePath, uploadUrl, options, true);
+            const success = await transfer.upload(filePath, uploadUrl, options);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const data = CoreTextUtils.parseJSON<any>(
-                success.response,
+                success.data,
                 null,
-                this.logger.error.bind(this.logger, 'Error parsing response from upload', success.response),
+                this.logger.error.bind(this.logger, 'Error parsing response from upload', success.data),
             );
 
             if (data === null) {

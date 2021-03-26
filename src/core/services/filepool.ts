@@ -46,6 +46,7 @@ import {
     CoreFilepoolQueueEntry,
     CoreFilepoolQueueDBEntry,
 } from '@services/database/filepool';
+import { FileTransferError } from '@singletons/file-transfer';
 
 /*
  * Factory for handling downloading files and retrieve downloaded files.

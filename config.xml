@@ -114,11 +114,6 @@
             </feature>
         </config-file>
         <config-file parent="/*" target="res/xml/config.xml">
-            <feature name="FileTransfer">
-                <param name="android-package" value="org.apache.cordova.filetransfer.FileTransfer" />
-            </feature>
-        </config-file>
-        <config-file parent="/*" target="res/xml/config.xml">
             <feature name="Geolocation">
                 <param name="android-package" value="org.apache.cordova.geolocation.Geolocation" />
             </feature>

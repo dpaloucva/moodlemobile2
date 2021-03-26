@@ -27,7 +27,6 @@ import { Device } from '@ionic-native/device/ngx';
 import { Diagnostic } from '@ionic-native/diagnostic/ngx';
 import { File } from '@ionic-native/file/ngx';
 import { FileOpener } from '@ionic-native/file-opener/ngx';
-import { FileTransfer } from '@ionic-native/file-transfer/ngx';
 import { Geolocation } from '@ionic-native/geolocation/ngx';
 import { HTTP } from '@ionic-native/http/ngx';
 import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
@@ -54,7 +53,6 @@ export const IONIC_NATIVE_SERVICES = [
     Diagnostic,
     File,
     FileOpener,
-    FileTransfer,
     Geolocation,
     HTTP,
     InAppBrowser,
@@ -77,7 +75,6 @@ import { CameraMock } from './services/camera';
 import { ClipboardMock } from './services/clipboard';
 import { FileMock } from './services/file';
 import { FileOpenerMock } from './services/file-opener';
-import { FileTransferMock } from './services/file-transfer';
 import { GeolocationMock } from './services/geolocation';
 import { InAppBrowserMock } from './services/inappbrowser';
 import { MediaCaptureMock } from './services/media-capture';
@@ -123,11 +120,6 @@ import { ZipMock } from './services/zip';
             provide: FileOpener,
             deps: [Platform],
             useFactory: (platform: Platform): FileOpener => platform.is('cordova') ? new FileOpener() : new FileOpenerMock(),
-        },
-        {
-            provide: FileTransfer,
-            deps: [Platform],
-            useFactory: (platform: Platform): FileTransfer => platform.is('cordova') ? new FileTransfer() : new FileTransferMock(),
         },
         {
             provide: Geolocation,
