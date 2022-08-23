@@ -55,7 +55,7 @@ import { SQLiteDB } from '@classes/sqlitedb';
 import { CorePlatform } from '@services/platform';
 import { CoreTime } from '@singletons/time';
 import { asyncObservable, firstValueFrom } from '@/core/utils/rxjs';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 const ROOT_CACHE_KEY = 'mmCourse:';
 
@@ -524,7 +524,7 @@ export class CoreCourseProvider {
      *                number of WS calls, but it isn't recommended for modules that can return a lot of contents.
      * @return Promise resolved with the module.
      */
-    async getModule(
+    getModule(
         moduleId: number,
         courseId?: number,
         sectionId?: number,
@@ -533,126 +533,159 @@ export class CoreCourseProvider {
         siteId?: string,
         modName?: string,
     ): Promise<CoreCourseModuleData> {
-        siteId = siteId || CoreSites.getCurrentSiteId();
+        return firstValueFrom(this.getModuleObservable(moduleId, {
+            courseId,
+            sectionId,
+            modName,
+            siteId,
+            readingStrategy: preferCache ? CoreSitesReadingStrategy.PREFER_CACHE :
+                (ignoreCache ? CoreSitesReadingStrategy.ONLY_NETWORK : undefined),
+        }));
+    }
 
-        // Helper function to do the WS request without processing the result.
-        const doRequest = async (
-            site: CoreSite,
-            courseId: number,
-            moduleId: number,
-            modName: string | undefined,
-            includeStealth: boolean,
-            preferCache: boolean,
-        ): Promise<CoreCourseGetContentsWSSection[]> => {
-            const params: CoreCourseGetContentsParams = {
-                courseid: courseId,
-            };
-            params.options = [];
+    /**
+     * Get a module from Moodle.
+     *
+     * @param moduleId The module ID.
+     * @param options Other options.
+     * @return Observable that returns the module.
+     */
+    getModuleObservable(
+        moduleId: number,
+        options: CoreCourseGetModuleOptions = {},
+    ): WSObservable<CoreCourseModuleData> {
+        return asyncObservable(async () => {
+            const site = await CoreSites.getSite(options.siteId);
+            let sectionId = options.sectionId;
+            let courseId: number;
 
-            const preSets: CoreSiteWSPreSets = {
-                omitExpires: preferCache,
-                updateFrequency: CoreSite.FREQUENCY_RARELY,
-            };
-
-            if (includeStealth) {
-                params.options.push({
-                    name: 'includestealthmodules',
-                    value: true,
-                });
-            }
-
-            // If modName is set, retrieve all modules of that type. Otherwise get only the module.
-            if (modName) {
-                params.options.push({
-                    name: 'modname',
-                    value: modName,
-                });
-                preSets.cacheKey = this.getModuleByModNameCacheKey(modName);
+            if (options.courseId) {
+                courseId = options.courseId;
             } else {
-                params.options.push({
-                    name: 'cmid',
-                    value: moduleId,
-                });
-                preSets.cacheKey = this.getModuleCacheKey(moduleId);
+                // No courseId passed, try to retrieve it.
+                const module = await this.getModuleBasicInfo(
+                    moduleId,
+                    { siteId: site.getId(), readingStrategy: CoreSitesReadingStrategy.PREFER_CACHE },
+                );
+                courseId = module.course;
+                sectionId = module.section;
             }
 
-            if (!preferCache && ignoreCache) {
-                preSets.getFromCache = false;
-                preSets.emergencyCache = false;
-            }
+            this.logger.debug(`Getting module ${moduleId} in course ${courseId}`);
 
-            try {
-                const sections = await site.read<CoreCourseGetContentsWSResponse>('core_course_get_contents', params, preSets);
+            return this.getModuleSections(site, courseId, moduleId, {
+                modName: options.modName,
+                includeStealth: this.canRequestStealthModules(site),
+                readingStrategy: options.readingStrategy,
+            }).pipe(
+                catchError(() =>
+                    // Error getting the module. Try to get all contents (without filtering by module).
+                    this.getSectionsObservable(courseId, {
+                        readingStrategy: options.readingStrategy,
+                        siteId: site.getId(),
+                    })),
+                map(sections => {
+                    let foundModule: CoreCourseGetContentsWSModule | undefined;
 
-                return sections;
-            } catch {
+                    const foundSection = sections.find((section) => {
+                        if (
+                            section.id !== CoreCourseProvider.STEALTH_MODULES_SECTION_ID &&
+                            sectionId !== undefined &&
+                            sectionId !== section.id
+                        ) {
+                            return false;
+                        }
+
+                        foundModule = section.modules.find((module) => module.id == moduleId);
+
+                        return !!foundModule;
+                    });
+
+                    if (foundSection && foundModule) {
+                        return this.addAdditionalModuleData(foundModule, courseId, foundSection.id);
+                    }
+
+                    throw new CoreError(Translate.instant('core.course.modulenotfound'));
+                }),
+            );
+        });
+    }
+
+    /**
+     * Get the sections a module belongs to (array with a single section).
+     *
+     * @param site Site.
+     * @param courseId Course ID the module belongs to.
+     * @param moduleId Module ID.
+     * @param options Other options.
+     * @return Observable that returns the list of sections.
+     */
+    protected getModuleSections(
+        site: CoreSite,
+        courseId: number,
+        moduleId: number,
+        options: {
+            modName?: string;
+            includeStealth?: boolean;
+            readingStrategy?: CoreSitesReadingStrategy;
+        } = {},
+    ): WSObservable<CoreCourseGetContentsWSSection[]> {
+        const params: CoreCourseGetContentsParams = {
+            courseid: courseId,
+        };
+        params.options = [];
+
+        const preSets: CoreSiteWSPreSets = {
+            updateFrequency: CoreSite.FREQUENCY_RARELY,
+            ...CoreSites.getReadingStrategyPreSets(options.readingStrategy),
+        };
+
+        if (options.includeStealth) {
+            params.options.push({
+                name: 'includestealthmodules',
+                value: true,
+            });
+        }
+
+        // If modName is set, retrieve all modules of that type. Otherwise get only the module.
+        if (options.modName) {
+            params.options.push({
+                name: 'modname',
+                value: options.modName,
+            });
+            preSets.cacheKey = this.getModuleByModNameCacheKey(options.modName);
+        } else {
+            params.options.push({
+                name: 'cmid',
+                value: moduleId,
+            });
+            preSets.cacheKey = this.getModuleCacheKey(moduleId);
+        }
+
+        return site.readObservable<CoreCourseGetContentsWSResponse>('core_course_get_contents', params, preSets).pipe(
+            catchError(() => {
                 // The module might still be cached by a request with different parameters.
-                if (!ignoreCache && !CoreNetwork.isOnline()) {
-                    if (includeStealth) {
+                if (options.readingStrategy !== CoreSitesReadingStrategy.ONLY_NETWORK && !CoreNetwork.isOnline()) {
+                    if (options.includeStealth) {
                         // Older versions didn't include the includestealthmodules option.
-                        return doRequest(site, courseId, moduleId, modName, false, true);
-                    } else if (modName) {
+                        return this.getModuleSections(site, courseId, moduleId, {
+                            modName: options.modName,
+                            includeStealth: false,
+                            readingStrategy: CoreSitesReadingStrategy.PREFER_CACHE,
+                        });
+                    } else if (options.modName) {
                         // Falback to the request for the given moduleId only.
-                        return doRequest(site, courseId, moduleId, undefined, this.canRequestStealthModules(site), true);
+                        return this.getModuleSections(site, courseId, moduleId, {
+                            includeStealth: this.canRequestStealthModules(site),
+                            readingStrategy: CoreSitesReadingStrategy.PREFER_CACHE,
+                        });
                     }
                 }
 
                 throw Error('WS core_course_get_contents failed, cache ignored');
-            }
-        };
-
-        if (!courseId) {
-            // No courseId passed, try to retrieve it.
-            const module = await this.getModuleBasicInfo(
-                moduleId,
-                { siteId, readingStrategy: CoreSitesReadingStrategy.PREFER_CACHE },
-            );
-            courseId = module.course;
-            sectionId = module.section;
-        }
-
-        let sections: CoreCourseGetContentsWSSection[];
-        try {
-            const site = await CoreSites.getSite(siteId);
-            // We have courseId, we can use core_course_get_contents for compatibility.
-            this.logger.debug(`Getting module ${moduleId} in course ${courseId}`);
-
-            sections = await doRequest(site, courseId, moduleId, modName, this.canRequestStealthModules(site), preferCache);
-        } catch {
-            // Error getting the module. Try to get all contents (without filtering by module).
-            const preSets: CoreSiteWSPreSets = {
-                omitExpires: preferCache,
-            };
-
-            if (!preferCache && ignoreCache) {
-                preSets.getFromCache = false;
-                preSets.emergencyCache = false;
-            }
-
-            sections = await this.getSections(courseId, false, false, preSets, siteId);
-        }
-
-        let foundModule: CoreCourseGetContentsWSModule | undefined;
-
-        const foundSection = sections.find((section) => {
-            if (section.id != CoreCourseProvider.STEALTH_MODULES_SECTION_ID &&
-                sectionId !== undefined &&
-                sectionId != section.id
-            ) {
-                return false;
-            }
-
-            foundModule = section.modules.find((module) => module.id == moduleId);
-
-            return !!foundModule;
-        });
-
-        if (foundSection && foundModule) {
-            return this.addAdditionalModuleData(foundModule, courseId, foundSection.id);
-        }
-
-        throw new CoreError(Translate.instant('core.course.modulenotfound'));
-    }
+            }),
+        );
+    };
 
     /**
      * Add some additional info to course module.
@@ -1981,4 +2014,13 @@ export type CoreCourseGetSectionsOptions = CoreSitesCommonWSOptions & {
     excludeContents?: boolean;
     includeStealthModules?: boolean; // Defaults to true.
     preSets?: CoreSiteWSPreSets;
+};
+
+/**
+ * Options for getModuleObservable.
+ */
+export type CoreCourseGetModuleOptions = CoreSitesCommonWSOptions & {
+    courseId?: number;
+    sectionId?: number;
+    modName?: string;
 };

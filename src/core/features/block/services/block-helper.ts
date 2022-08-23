@@ -16,6 +16,11 @@ import { Injectable } from '@angular/core';
 import { CoreCourse, CoreCourseBlock } from '@features/course/services/course';
 import { CoreBlockDelegate } from './block-delegate';
 import { makeSingleton } from '@singletons';
+import { of } from 'rxjs';
+import { firstValueFrom } from '@/core/utils/rxjs';
+import { CoreSitesCommonWSOptions } from '@services/sites';
+import { catchError, map } from 'rxjs/operators';
+import { WSObservable } from '@classes/site';
 
 /**
  * Service that provides helper functions for blocks.
@@ -33,41 +38,57 @@ export class CoreBlockHelperProvider {
     }
 
     /**
-     * Returns the list of blocks for the selected course.
+     * Returns the list of blocks for the selected course. It will return an empty list if there are no supported blocks.
      *
      * @param courseId Course ID.
-     * @return List of supported blocks.
+     * @param options Other options.
+     * @return List of blocks.
      */
-    async getCourseBlocks(courseId: number): Promise<CoreCourseBlock[]> {
-        const canGetBlocks = this.canGetCourseBlocks();
-
-        if (!canGetBlocks) {
-            return [];
-        }
-
-        const blocks = await CoreCourse.getCourseBlocks(courseId);
-        const hasSupportedBlock = CoreBlockDelegate.hasSupportedBlock(blocks);
-        if (!hasSupportedBlock) {
-            return [];
-        }
-
-        return blocks;
+    getCourseBlocks(courseId: number, options: CoreSitesCommonWSOptions = {}): Promise<CoreCourseBlock[]> {
+        return firstValueFrom(this.getCourseBlocksObservable(courseId, options));
     }
 
     /**
-     * Returns if the course has any block.
+     * Returns the list of blocks for the selected course. It will return an empty list if there are no supported blocks.
      *
      * @param courseId Course ID.
+     * @param options Other options.
+     * @return List of blocks.
+     */
+    getCourseBlocksObservable(courseId: number, options: CoreSitesCommonWSOptions = {}): WSObservable<CoreCourseBlock[]> {
+        const canGetBlocks = this.canGetCourseBlocks();
+
+        if (!canGetBlocks) {
+            return of([]);
+        }
+
+        return CoreCourse.getCourseBlocksObservable(courseId, options).pipe(map(blocks =>
+            CoreBlockDelegate.hasSupportedBlock(blocks) ? blocks : []));
+    }
+
+    /**
+     * Returns if the course has any supported block.
+     *
+     * @param courseId Course ID.
+     * @param options Other options.
      * @return Wether course has blocks.
      */
-    async hasCourseBlocks(courseId: number): Promise<boolean> {
-        try {
-            const blocks = await this.getCourseBlocks(courseId);
+    async hasCourseBlocks(courseId: number, options: CoreSitesCommonWSOptions = {}): Promise<boolean> {
+        return firstValueFrom(this.hasCourseBlocksObservable(courseId, options));
+    }
 
-            return blocks.length > 0;
-        } catch {
-            return false;
-        }
+    /**
+     * Returns if the course has any supported block.
+     *
+     * @param courseId Course ID.
+     * @param options Other options.
+     * @return Wether course has blocks.
+     */
+    hasCourseBlocksObservable(courseId: number, options: CoreSitesCommonWSOptions = {}): WSObservable<boolean> {
+        return this.getCourseBlocksObservable(courseId, options).pipe(
+            map(blocks => blocks.length > 0),
+            catchError(() => of(false)),
+        );
     }
 
 }

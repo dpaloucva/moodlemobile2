@@ -29,6 +29,8 @@ import { CoreUtils } from '@services/utils/utils';
 import { CoreStatusWithWarningsWSResponse, CoreWSExternalFile, CoreWSExternalWarning, CoreWSStoredFile } from '@services/ws';
 import { makeSingleton, Translate } from '@singletons';
 import { AddonModForumOffline, AddonModForumOfflineDiscussion, AddonModForumReplyOptions } from './forum-offline';
+import { Observable } from 'rxjs';
+import { asyncObservable, firstValueFrom } from '@/core/utils/rxjs';
 
 const ROOT_CACHE_KEY = 'mmaModForum:';
 
@@ -416,20 +418,33 @@ export class AddonModForumProvider {
      * @param options Other options.
      * @return Promise resolved when the forums are retrieved.
      */
-    async getCourseForums(courseId: number, options: CoreSitesCommonWSOptions = {}): Promise<AddonModForumData[]> {
-        const site = await CoreSites.getSite(options.siteId);
+    getCourseForums(courseId: number, options: CoreSitesCommonWSOptions = {}): Promise<AddonModForumData[]> {
+        return firstValueFrom(this.getCourseForumsObservable(courseId, options));
+    }
 
-        const params: AddonModForumGetForumsByCoursesWSParams = {
-            courseids: [courseId],
-        };
-        const preSets: CoreSiteWSPreSets = {
-            cacheKey: this.getForumDataCacheKey(courseId),
-            updateFrequency: CoreSite.FREQUENCY_RARELY,
-            component: AddonModForumProvider.COMPONENT,
-            ...CoreSites.getReadingStrategyPreSets(options.readingStrategy),
-        };
+    /**
+     * Get all course forums.
+     *
+     * @param courseId Course ID.
+     * @param options Other options.
+     * @return Observable with the forums.
+     */
+    getCourseForumsObservable(courseId: number, options: CoreSitesCommonWSOptions = {}): Observable<AddonModForumData[]> {
+        return asyncObservable(async () => {
+            const site = await CoreSites.getSite(options.siteId);
 
-        return site.read('mod_forum_get_forums_by_courses', params, preSets);
+            const params: AddonModForumGetForumsByCoursesWSParams = {
+                courseids: [courseId],
+            };
+            const preSets: CoreSiteWSPreSets = {
+                cacheKey: this.getForumDataCacheKey(courseId),
+                updateFrequency: CoreSite.FREQUENCY_RARELY,
+                component: AddonModForumProvider.COMPONENT,
+                ...CoreSites.getReadingStrategyPreSets(options.readingStrategy),
+            };
+
+            return site.readObservable<AddonModForumData[]>('mod_forum_get_forums_by_courses', params, preSets);
+        });
     }
 
     /**

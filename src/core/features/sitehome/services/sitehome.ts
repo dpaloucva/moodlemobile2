@@ -14,13 +14,15 @@
 
 import { Injectable } from '@angular/core';
 
-import { CoreSites } from '@services/sites';
-import { CoreSite, CoreSiteWSPreSets } from '@classes/site';
+import { CoreSites, CoreSitesCommonWSOptions } from '@services/sites';
+import { CoreSite, CoreSiteWSPreSets, WSObservable } from '@classes/site';
 import { makeSingleton } from '@singletons';
 import { CoreCourse } from '../../course/services/course';
 import { CoreCourses } from '../../courses/services/courses';
 import { AddonModForum, AddonModForumData } from '@addons/mod/forum/services/forum';
 import { CoreError } from '@classes/errors/error';
+import { asyncObservable, firstValueFrom } from '@/core/utils/rxjs';
+import { map } from 'rxjs/operators';
 
 /**
  * Items with index 1 and 3 were removed on 2.5 and not being supported in the app.
@@ -44,21 +46,36 @@ export class CoreSiteHomeProvider {
      * Get the news forum for the Site Home.
      *
      * @param siteHomeId Site Home ID.
+     * @param options Other options.
      * @return Promise resolved with the forum if found, rejected otherwise.
      */
-    async getNewsForum(siteHomeId?: number): Promise<AddonModForumData> {
-        if (!siteHomeId) {
-            siteHomeId = CoreSites.getCurrentSiteHomeId();
-        }
+    async getNewsForum(siteHomeId?: number, options: CoreSitesCommonWSOptions = {}): Promise<AddonModForumData> {
+        return firstValueFrom(this.getNewsForumObservable(siteHomeId, options));
+    }
 
-        const forums = await AddonModForum.getCourseForums(siteHomeId);
-        const forum = forums.find((forum) => forum.type == 'news');
+    /**
+     * Get the news forum for the Site Home.
+     *
+     * @param siteHomeId Site Home ID.
+     * @param options Other options.
+     * @return Observable that returns the forum if found.
+     */
+    getNewsForumObservable(siteHomeId?: number, options: CoreSitesCommonWSOptions = {}): WSObservable<AddonModForumData> {
+        return asyncObservable(async () => {
+            if (!siteHomeId) {
+                siteHomeId = CoreSites.getCurrentSiteHomeId();
+            }
 
-        if (forum) {
-            return forum;
-        }
+            return AddonModForum.getCourseForumsObservable(siteHomeId, options).pipe(map(forums => {
+                const forum = forums.find((forum) => forum.type == 'news');
 
-        throw new CoreError('No news forum found');
+                if (forum) {
+                    return forum;
+                }
+
+                throw new CoreError('No news forum found');
+            }));
+        });
     }
 
     /**
