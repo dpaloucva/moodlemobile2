@@ -1027,7 +1027,7 @@ export class CoreCourseProvider {
                     let showSections = true;
                     if (courseId == siteHomeId) {
                         const storedNumSections = site.getStoredConfig('numsections');
-                        showSections = storedNumSections !== undefined && !!storedNumSections;
+                        showSections = storedNumSections !== undefined && !!Number(storedNumSections);
                     }
 
                     if (showSections !== undefined && !showSections && sections.length > 0) {

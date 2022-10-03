@@ -163,7 +163,7 @@ export class CoreSiteHomeProvider {
     }
 
     /**
-     * Get the nams of the valid frontpage items.
+     * Get the names of the valid frontpage items.
      *
      * @param frontpageItemIds CSV string with indexes of site home components.
      * @return Valid names for each item.

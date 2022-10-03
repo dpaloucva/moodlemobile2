@@ -29,6 +29,11 @@ import { CoreCourseModulePrefetchDelegate } from '@features/course/services/modu
 import { CoreNavigationOptions, CoreNavigator } from '@services/navigator';
 import { CoreBlockHelper } from '@features/block/services/block-helper';
 import { CoreUtils } from '@services/utils/utils';
+import { AsyncComponent } from '@classes/async-component';
+import { PageLoadsManager } from '@classes/page-loads-manager';
+import { CorePromisedValue } from '@classes/promised-value';
+import { Subscription } from 'rxjs';
+import { PageLoadWatcher } from '@classes/page-load-watcher';
 
 /**
  * Page that displays site home index.
@@ -37,10 +42,14 @@ import { CoreUtils } from '@services/utils/utils';
     selector: 'page-core-sitehome-index',
     templateUrl: 'index.html',
     styleUrls: ['index.scss'],
+    providers: [{
+        provide: PageLoadsManager,
+        useClass: PageLoadsManager,
+    }],
 })
-export class CoreSiteHomeIndexPage implements OnInit, OnDestroy {
+export class CoreSiteHomeIndexPage implements OnInit, OnDestroy, AsyncComponent {
 
-    dataLoaded = false;
+    showLoading = true;
     section?: CoreCourseWSSection & {
         hasContent?: boolean;
     };
@@ -55,12 +64,19 @@ export class CoreSiteHomeIndexPage implements OnInit, OnDestroy {
 
     protected updateSiteObserver: CoreEventObserver;
     protected fetchSuccess = false;
+    protected onReadyPromise = new CorePromisedValue<void>();
+    protected loadsManagerSubscription: Subscription;
 
-    constructor() {
+    constructor(protected loadsManager: PageLoadsManager) {
         // Refresh the enabled flags if site is updated.
         this.updateSiteObserver = CoreEvents.on(CoreEvents.SITE_UPDATED, () => {
             this.searchEnabled = !CoreCourses.isSearchCoursesDisabledInSite();
         }, CoreSites.getCurrentSiteId());
+
+        this.loadsManagerSubscription = this.loadsManager.onRefreshPage.subscribe(() => {
+            this.showLoading = true;
+            this.loadContent();
+        });
     }
 
     /**
@@ -85,58 +101,35 @@ export class CoreSiteHomeIndexPage implements OnInit, OnDestroy {
             CoreCourseHelper.openModule(module, this.siteHomeId, { modNavOptions });
         }
 
-        this.loadContent().finally(() => {
-            this.dataLoaded = true;
-        });
+        this.loadContent(true);
     }
 
     /**
      * Convenience function to fetch the data.
      *
+     * @param firstLoad Whether it's the first load.
      * @return Promise resolved when done.
      */
-    protected async loadContent(): Promise<void> {
+    protected async loadContent(firstLoad = false): Promise<void> {
+        const loadWatcher = this.loadsManager.startPageLoad(this, !!firstLoad);
         this.hasContent = false;
 
-        const config = this.currentSite.getStoredConfig() || { numsections: 1, frontpageloggedin: undefined };
+        const config = this.currentSite.getStoredConfig() || { numsections: '1', frontpageloggedin: '' };
 
         this.items = await CoreSiteHome.getFrontPageItems(config.frontpageloggedin);
         this.hasContent = this.items.length > 0;
 
-        // Get the news forum.
+        const promises: Promise<unknown>[] = [
+            this.loadSectionsContent(loadWatcher, config),
+            this.loadHasBlocks(loadWatcher),
+        ];
+
         if (this.items.includes('NEWS_ITEMS')) {
-            try {
-                const forum = await CoreSiteHome.getNewsForum(this.siteHomeId);
-                this.newsForumModule = await CoreCourse.getModule(forum.cmid, forum.course);
-                this.newsForumModule.handlerData = await CoreCourseModuleDelegate.getModuleDataFor(
-                    this.newsForumModule.modname,
-                    this.newsForumModule,
-                    this.siteHomeId,
-                    undefined,
-                    true,
-                );
-            } catch {
-                // Ignore errors.
-            }
+            promises.push(this.loadNewsForum(loadWatcher));
         }
 
         try {
-            const sections = await CoreCourse.getSections(this.siteHomeId, false, true);
-
-            // Check "Include a topic section" setting from numsections.
-            this.section = config.numsections ? sections.find((section) => section.section == 1) : undefined;
-            if (this.section) {
-                const result = await CoreCourseHelper.addHandlerDataForModules(
-                    [this.section],
-                    this.siteHomeId,
-                    undefined,
-                    undefined,
-                    true,
-                );
-
-                this.section.hasContent = result.hasContent;
-                this.hasContent = result.hasContent || this.hasContent;
-            }
+            await Promise.all(promises);
 
             if (!this.fetchSuccess) {
                 this.fetchSuccess = true;
@@ -151,7 +144,84 @@ export class CoreSiteHomeIndexPage implements OnInit, OnDestroy {
             CoreDomUtils.showErrorModalDefault(error, 'core.course.couldnotloadsectioncontent', true);
         }
 
-        this.hasBlocks = await CoreBlockHelper.hasCourseBlocks(this.siteHomeId);
+        this.showLoading = false;
+        this.onReadyPromise.resolve();
+    }
+
+    /**
+     * Load news forum.
+     *
+     * @param loadWatcher To manage the requests.
+     */
+    protected async loadNewsForum(loadWatcher: PageLoadWatcher): Promise<void> {
+        try {
+            const forum = await loadWatcher.watchRequest(
+                CoreSiteHome.getNewsForumObservable(this.siteHomeId, { readingStrategy: loadWatcher.getReadingStrategy() }),
+            );
+
+            this.newsForumModule = await loadWatcher.watchRequest(
+                CoreCourse.getModuleObservable(forum.cmid, {
+                    courseId: forum.course,
+                    readingStrategy: loadWatcher.getReadingStrategy(),
+                }),
+                (prevModule, newModule) => this.moduleHasMeaningfulChanges(prevModule, newModule),
+            );
+            this.newsForumModule.handlerData = await CoreCourseModuleDelegate.getModuleDataFor(
+                this.newsForumModule.modname,
+                this.newsForumModule,
+                this.siteHomeId,
+                undefined,
+                true,
+            );
+        } catch {
+            // Ignore errors.
+        }
+    }
+
+    /**
+     * Load the content of the sections.
+     *
+     * @param loadWatcher To manage the requests.
+     * @param config Site config.
+     */
+    protected async loadSectionsContent(loadWatcher: PageLoadWatcher, config: CoreSiteConfig): Promise<void> {
+        const sections = await loadWatcher.watchRequest(
+            CoreCourse.getSectionsObservable(this.siteHomeId, {
+                excludeContents: true,
+                readingStrategy: loadWatcher.getReadingStrategy(),
+            }),
+            (prevSections, newSections) => this.sectionsHaveMeaningfulChanges(config, prevSections, newSections),
+        );
+
+        // Check "Include a topic section" setting from numsections.
+        this.section = Number(config.numsections) ? sections.find((section) => section.section === 1) : undefined;
+        if (this.section) {
+            const result = await CoreCourseHelper.addHandlerDataForModules(
+                [this.section],
+                this.siteHomeId,
+                undefined,
+                undefined,
+                true,
+            );
+
+            this.section.hasContent = result.hasContent;
+            this.hasContent = result.hasContent || this.hasContent;
+        }
+    }
+
+    /**
+     * Load whether the site home has blocks.
+     *
+     * @param loadWatcher To manage the requests.
+     */
+    protected async loadHasBlocks(loadWatcher: PageLoadWatcher): Promise<void> {
+        try {
+            this.hasBlocks = await loadWatcher.watchRequest(
+                CoreBlockHelper.hasCourseBlocksObservable(this.siteHomeId, { readingStrategy: loadWatcher.getReadingStrategy() }),
+            );
+        } catch {
+            this.hasBlocks = false;
+        }
     }
 
     /**
@@ -172,6 +242,7 @@ export class CoreSiteHomeIndexPage implements OnInit, OnDestroy {
         }));
 
         promises.push(CoreCourse.invalidateCourseBlocks(this.siteHomeId));
+        promises.push(CoreSiteHome.invalidateNewsForum(this.siteHomeId));
 
         if (this.section && this.section.modules) {
             // Invalidate modules prefetch data.
@@ -214,10 +285,69 @@ export class CoreSiteHomeIndexPage implements OnInit, OnDestroy {
     }
 
     /**
+     * Compare if the WS data has meaningful changes for the user.
+     *
+     * @param previousSections Previous sections.
+     * @param newSections New sections.
+     * @return Whether it has meaningful changes.
+     */
+    protected async sectionsHaveMeaningfulChanges(
+        config: CoreSiteConfig,
+        previousSections: CoreCourseWSSection[],
+        newSections: CoreCourseWSSection[],
+    ): Promise<boolean> {
+        if (!Number(config.numsections)) {
+            return false;
+        }
+
+        const previousSection = previousSections.find((section) => section.section === 1);
+        const newSection = newSections.find((section) => section.section === 1);
+
+        if (!previousSection || !newSection) {
+            return (previousSection || newSection) ? true : false;
+        }
+
+        if (previousSection.summary !== newSection.summary || previousSection.modules.length !== newSection.modules.length) {
+            return true;
+        }
+
+        const modulesChangedValues = await Promise.all(
+            previousSection.modules.map((prevModule, i) => this.moduleHasMeaningfulChanges(prevModule, newSection.modules[i])),
+        );
+
+        return modulesChangedValues.includes(true);
+    }
+
+    /**
+     * Compare if the WS data has meaningful changes for the user.
+     *
+     * @param previousModule Previous module.
+     * @param newModule New module.
+     * @return Whether it has meaningful changes.
+     */
+    protected async moduleHasMeaningfulChanges(
+        previousModule: CoreCourseModuleData,
+        newModule: CoreCourseModuleData,
+    ): Promise<boolean> {
+        return previousModule.name.trim() !== newModule.name.trim() ||
+            previousModule.visible !== newModule.visible ||
+            previousModule.uservisible !== newModule.uservisible ||
+            previousModule.description?.trim() !== newModule.description?.trim();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    async ready(): Promise<void> {
+        return await this.onReadyPromise;
+    }
+
+    /**
      * Component being destroyed.
      */
     ngOnDestroy(): void {
         this.updateSiteObserver.off();
+        this.loadsManagerSubscription.unsubscribe();
     }
 
 }
