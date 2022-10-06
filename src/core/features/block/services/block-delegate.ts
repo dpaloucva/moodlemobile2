@@ -23,6 +23,10 @@ import { makeSingleton } from '@singletons';
 import { CoreBlockDefaultHandler } from './handlers/default-block';
 import { CoreNavigationOptions } from '@services/navigator';
 import type { ICoreBlockComponent } from '@features/block/classes/base-block-component';
+import { CoreBlockOnlyTitleComponent } from '../components/only-title-block/only-title-block';
+import { CoreObject } from '@singletons/object';
+import { CoreBlockPreRenderedComponent } from '../components/pre-rendered-block/pre-rendered-block';
+import { CoreUtils } from '@services/utils/utils';
 
 /**
  * Interface that all blocks must implement.
@@ -46,6 +50,17 @@ export interface CoreBlockHandler extends CoreDelegateHandler {
         contextLevel: string,
         instanceId: number,
     ): undefined | CoreBlockHandlerData | Promise<CoreBlockHandlerData>;
+
+    /**
+     * Compare 2 blocks of the same type to check if there are meaningful changes between them. This function is used to
+     * check if a block has changed.
+     * Prerendered and only title blocks don't need to implement this function.
+     *
+     * @param blockA First block.
+     * @param blockB Second block.
+     * @return Whether there are meaningful changes.
+     */
+    blockHasMeaningfulChanges?(blockA: CoreCourseBlock, blockB: CoreCourseBlock): Promise<boolean>;
 }
 
 /**
@@ -107,6 +122,7 @@ export class CoreBlockDelegateService extends CoreDelegate<CoreBlockHandler> {
         super('CoreBlockDelegate', true);
 
         this.blocksUpdateObservable = new Subject<void>();
+        (<any>window).blockDel = this;
     }
 
     /**
@@ -204,6 +220,60 @@ export class CoreBlockDelegateService extends CoreDelegate<CoreBlockHandler> {
      */
     updateData(): void {
         this.blocksUpdateObservable.next();
+    }
+
+    /**
+     * Compare 2 blocks data to check if there are meaningful changes that affect the UI.
+     *
+     * @param blockA First block.
+     * @param blockB Second block.
+     * @param contextLevel The context where the block will be used.
+     * @param instanceId The instance ID associated with the context level.
+     * @return Whether there are meaningful changes.
+     */
+    async blockHasMeaningfulChanges(
+        blockA: CoreCourseBlock,
+        blockB: CoreCourseBlock,
+        contextLevel: string,
+        instanceId: number,
+    ): Promise<boolean> {
+        if (blockA.name !== blockB.name) {
+            return true;
+        }
+
+        const handler = this.getHandler(blockA.name, true);
+        if (!handler) {
+            return false;
+        }
+
+        if (handler.blockHasMeaningfulChanges) {
+            return await handler.blockHasMeaningfulChanges(blockA, blockB);
+        } else if (!handler.getDisplayData) {
+            return false;
+        }
+
+        // Check its component to see if changes can be determined automatically.
+        const [displayDataA, displayDataB] = await Promise.all([
+            handler.getDisplayData(blockA, contextLevel, instanceId),
+            handler.getDisplayData(blockB, contextLevel, instanceId),
+        ]);
+
+        if (!displayDataA) {
+            return !!displayDataB;
+        } else if (!displayDataB) {
+            return !!displayDataA;
+        }
+
+        if (CoreUtils.isSubclassOrEqual(displayDataA.component, CoreBlockOnlyTitleComponent)) {
+            return displayDataA.title !== displayDataB.title || displayDataA.link !== displayDataB.link ||
+                !CoreObject.deepEquals(displayDataA.linkParams, displayDataB.linkParams);
+        } else if (CoreUtils.isSubclassOrEqual(displayDataB.component, CoreBlockPreRenderedComponent)) {
+            return displayDataA.title !== displayDataB.title || blockA.contents?.content !== blockB.contents?.content ||
+                blockA.contents?.footer !== blockB.contents?.footer;
+        }
+        console.error('IS OTHER BLOCK', blockA.name);
+
+        return false;
     }
 
 }

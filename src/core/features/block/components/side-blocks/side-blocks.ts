@@ -88,6 +88,7 @@ export class CoreBlockSideBlocksComponent implements OnInit {
 
                 this.blocks = blocks.sideBlocks;
             }
+            (<any>window).sideBlocks = this.blocks;
         } catch (error) {
             CoreDomUtils.showErrorModal(error);
 

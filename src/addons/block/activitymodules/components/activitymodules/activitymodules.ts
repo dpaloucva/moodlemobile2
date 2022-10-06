@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Component, OnInit } from '@angular/core';
-import { CoreCourse } from '@features/course/services/course';
+import { Component, OnInit, Optional } from '@angular/core';
+import { CoreCourse, CoreCourseWSSection } from '@features/course/services/course';
 import { CoreCourseModuleDelegate } from '@features/course/services/module-delegate';
 import { CoreBlockBaseComponent } from '@features/block/classes/base-block-component';
 import { CoreSites } from '@services/sites';
@@ -22,6 +22,8 @@ import { Translate } from '@singletons';
 import { CoreUtils } from '@services/utils/utils';
 import { CoreNavigator } from '@services/navigator';
 import { CoreCourseHelper } from '@features/course/services/course-helper';
+import { PageLoadsManager } from '@classes/page-loads-manager';
+import { PageLoadWatcher } from '@classes/page-load-watcher';
 
 /**
  * Component to render an "activity modules" block.
@@ -37,8 +39,8 @@ export class AddonBlockActivityModulesComponent extends CoreBlockBaseComponent i
 
     protected fetchContentDefaultError = 'Error getting activity modules data.';
 
-    constructor() {
-        super('AddonBlockActivityModulesComponent');
+    constructor(@Optional() loadsManager?: PageLoadsManager) {
+        super('AddonBlockActivityModulesComponent', loadsManager);
     }
 
     /**
@@ -51,25 +53,80 @@ export class AddonBlockActivityModulesComponent extends CoreBlockBaseComponent i
     }
 
     /**
-     * Fetch the data to render the block.
-     *
-     * @return Promise resolved when done.
+     * @inheritdoc
      */
-    protected async fetchContent(): Promise<void> {
-        const sections = await CoreCourse.getSections(this.getCourseId(), false, true);
+    protected async fetchContent(loadWatcher: PageLoadWatcher): Promise<void> {
+        const sections = await loadWatcher.watchRequest(
+            CoreCourse.getSectionsObservable(this.getCourseId(), {
+                excludeContents: true,
+                readingStrategy: loadWatcher.getReadingStrategy(),
+            }),
+            (prevSections, newSections) => this.sectionsHaveMeaningfulChanges(prevSections, newSections),
+        );
 
-        this.entries = [];
-        const archetypes: Record<string, number> = {};
+        this.entries = await this.getEntriesFromSections(sections);
+    }
+
+    /**
+     * Obtain the appropiate course id for the block.
+     *
+     * @return Course id.
+     */
+    protected getCourseId(): number {
+        if (this.contextLevel == ContextLevel.COURSE) {
+            return this.instanceId;
+        }
+
+        return CoreSites.getCurrentSiteHomeId();
+    }
+
+    /**
+     * Given the course sections, return the module entries.
+     *
+     * @param sections Course sections.
+     * @return Module entries.
+     */
+    protected async getEntriesFromSections(sections: CoreCourseWSSection[]): Promise<AddonBlockActivityModuleEntry[]> {
+        const modulesData = this.getModulesDataFromSections(sections);
+
+        return await Promise.all(Object.keys(modulesData.modFullNames).map(async (modName) => {
+            const iconModName = modName === 'resources' ? 'page' : modName;
+
+            const icon = await CoreCourseModuleDelegate.getModuleIconSrc(iconModName, modulesData.modIcons[iconModName]);
+
+            return <AddonBlockActivityModuleEntry> {
+                icon,
+                iconModName,
+                name: modulesData.modFullNames[modName],
+                modName,
+            };
+        }));
+    }
+
+    /**
+     * Given the course sections, return the label and default icon for each type of module in the course.
+     *
+     * @param sections Course sections.
+     * @return Modules data.
+     */
+    protected getModulesDataFromSections(
+        sections: CoreCourseWSSection[],
+    ): { modIcons: Record<string, string>; modFullNames: Record<string, string> } {
         const modIcons: Record<string, string> = {};
+        const archetypes: Record<string, number> = {};
         let modFullNames: Record<string, string> = {};
+
         sections.forEach((section) => {
             if (!section.modules) {
                 return;
             }
 
             section.modules.forEach((mod) => {
-                if (!CoreCourseHelper.canUserViewModule(mod, section) || !CoreCourse.moduleHasView(mod) ||
-                    modFullNames[mod.modname] !== undefined) {
+                if (
+                    !CoreCourseHelper.canUserViewModule(mod, section) ||
+                    !CoreCourse.moduleHasView(mod) ||
+                    modFullNames[mod.modname] !== undefined
+                ) {
                     // Ignore this module.
                     return;
                 }
@@ -92,36 +149,32 @@ export class AddonBlockActivityModulesComponent extends CoreBlockBaseComponent i
                 } else {
                     modFullNames[mod.modname] = mod.modplural;
                 }
+
                 modIcons[mod.modname] = mod.modicon;
             });
         });
+
         // Sort the modnames alphabetically.
         modFullNames = CoreUtils.sortValues(modFullNames);
-        for (const modName in modFullNames) {
-            const iconModName = modName === 'resources' ? 'page' : modName;
 
-            const icon = await CoreCourseModuleDelegate.getModuleIconSrc(iconModName, modIcons[iconModName]);
-
-            this.entries.push({
-                icon,
-                iconModName,
-                name: modFullNames[modName],
-                modName,
-            });
-        }
+        return { modFullNames, modIcons };
     }
 
     /**
-     * Obtain the appropiate course id for the block.
+     * Compare if the WS data has meaningful changes for the user.
      *
-     * @return Course id.
+     * @param previousSections Previous sections.
+     * @param newSections New sections.
+     * @return Whether it has meaningful changes.
      */
-    protected getCourseId(): number {
-        if (this.contextLevel == ContextLevel.COURSE) {
-            return this.instanceId;
-        }
+    protected async sectionsHaveMeaningfulChanges(
+        previousSections: CoreCourseWSSection[],
+        newSections: CoreCourseWSSection[],
+    ): Promise<boolean> {
+        const prevModData = this.getModulesDataFromSections(previousSections);
+        const newModData = this.getModulesDataFromSections(newSections);
 
-        return CoreSites.getCurrentSiteHomeId();
+        return JSON.stringify(Object.keys(prevModData.modFullNames)) !== JSON.stringify(Object.keys(newModData.modFullNames));
     }
 
     /**

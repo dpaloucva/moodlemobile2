@@ -101,20 +101,16 @@ export class AddonBlockMyOverviewComponent extends CoreBlockBaseComponent implem
     protected gradePeriodAfter = 0;
     protected gradePeriodBefore = 0;
     protected today = 0;
-    protected firstLoadWatcher?: PageLoadWatcher;
-    protected loadsManager: PageLoadsManager;
 
     constructor(@Optional() loadsManager?: PageLoadsManager) {
-        super('AddonBlockMyOverviewComponent');
-
-        this.loadsManager = loadsManager ?? new PageLoadsManager();
+        super('AddonBlockMyOverviewComponent', loadsManager);
     }
 
     /**
      * @inheritdoc
      */
     async ngOnInit(): Promise<void> {
-        this.firstLoadWatcher = this.loadsManager.startComponentLoad(this);
+        this.startOnInit();
 
         // Refresh the enabled flags if enabled.
         this.downloadCourseEnabled = !CoreCourses.isDownloadCourseDisabledInSite();
@@ -248,10 +244,7 @@ export class AddonBlockMyOverviewComponent extends CoreBlockBaseComponent implem
     /**
      * @inheritdoc
      */
-    protected async fetchContent(): Promise<void> {
-        const loadWatcher = this.firstLoadWatcher ?? this.loadsManager.startComponentLoad(this);
-        this.firstLoadWatcher = undefined;
-
+    protected async fetchContent(loadWatcher: PageLoadWatcher): Promise<void> {
         await Promise.all([
             this.loadAllCourses(loadWatcher),
             this.loadGracePeriod(loadWatcher),

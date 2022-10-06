@@ -39,6 +39,7 @@ import { CoreSite } from '@classes/site';
 import { CoreHttpError } from '@classes/errors/httperror';
 import { CorePromisedValue } from '@classes/promised-value';
 import { CorePlatform } from '@services/platform';
+import { CoreUtils } from './utils/utils';
 
 /**
  * This service allows performing WS calls and download/upload files.
@@ -602,13 +603,14 @@ export class CoreWSProvider {
      * @param options Request options.
      * @return Promise resolved with the response data in success and rejected with CoreWSError if it fails.
      */
-    protected performSinglePost<T>(
+    protected async performSinglePost<T>(
         method: string,
         siteUrl: string,
         ajaxData: Record<string, unknown>,
         preSets: CoreWSPreSets,
         options: any, // eslint-disable-line @typescript-eslint/no-explicit-any
     ): Promise<T> {
+        // await CoreUtils.wait(10000);
 
         // We add the method name to the URL purely to help with debugging.
         // This duplicates what is in the ajaxData, but that does no harm.
@@ -994,6 +996,7 @@ export class CoreWSProvider {
         // Set default values.
         options.responseType = options.responseType || 'json';
         options.timeout = options.timeout === undefined ? this.getRequestTimeout() : options.timeout;
+        // await CoreUtils.wait(10000);
 
         if (CorePlatform.isMobile()) {
             // Use the cordova plugin.

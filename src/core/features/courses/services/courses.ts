@@ -724,20 +724,33 @@ export class CoreCoursesProvider {
      * @since 3.6
      */
     async getRecentCourses(options: CoreCourseGetRecentCoursesOptions = {}): Promise<CoreCourseSummaryData[]> {
-        const site = await CoreSites.getSite(options.siteId);
+        return firstValueFrom(this.getRecentCoursesObservables(options));
+    }
 
-        const userId = options.userId || site.getUserId();
-        const params: CoreCourseGetRecentCoursesWSParams = {
-            userid: userId,
-            offset: options.offset || 0,
-            limit: options.limit || CoreCoursesProvider.RECENT_PER_PAGE,
-            sort: options.sort,
-        };
-        const preSets: CoreSiteWSPreSets = {
-            cacheKey: this.getRecentCoursesCacheKey(userId),
-        };
+    /**
+     * Get recent courses.
+     *
+     * @param options Options.
+     * @return Observable emitting courses.
+     * @since 3.6
+     */
+    getRecentCoursesObservables(options: CoreCourseGetRecentCoursesOptions = {}): WSObservable<CoreCourseSummaryData[]> {
+        return asyncObservable(async () => {
+            const site = await CoreSites.getSite(options.siteId);
 
-        return site.read<CoreCourseSummaryData[]>('core_course_get_recent_courses', params, preSets);
+            const userId = options.userId || site.getUserId();
+            const params: CoreCourseGetRecentCoursesWSParams = {
+                userid: userId,
+                offset: options.offset || 0,
+                limit: options.limit || CoreCoursesProvider.RECENT_PER_PAGE,
+                sort: options.sort,
+            };
+            const preSets: CoreSiteWSPreSets = {
+                cacheKey: this.getRecentCoursesCacheKey(userId),
+            };
+
+            return site.readObservable<CoreCourseSummaryData[]>('core_course_get_recent_courses', params, preSets);
+        });
     }
 
     /**

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Optional } from '@angular/core';
 import { CoreEventObserver, CoreEvents } from '@singletons/events';
 import { CoreSites } from '@services/sites';
 import {
@@ -31,6 +31,8 @@ import { AddonCourseCompletion } from '@addons/coursecompletion/services/coursec
 import { CoreBlockBaseComponent } from '@features/block/classes/base-block-component';
 import { CoreUtils } from '@services/utils/utils';
 import { CoreSite } from '@classes/site';
+import { PageLoadsManager } from '@classes/page-loads-manager';
+import { PageLoadWatcher } from '@classes/page-load-watcher';
 
 /**
  * Component to render a recent courses block.
@@ -50,8 +52,8 @@ export class AddonBlockRecentlyAccessedCoursesComponent extends CoreBlockBaseCom
     protected coursesObserver?: CoreEventObserver;
     protected fetchContentDefaultError = 'Error getting recent courses data.';
 
-    constructor() {
-        super('AddonBlockRecentlyAccessedCoursesComponent');
+    constructor(@Optional() loadsManager?: PageLoadsManager) {
+        super('AddonBlockRecentlyAccessedCoursesComponent', loadsManager);
 
         this.site = CoreSites.getRequiredCurrentSite();
     }
@@ -125,13 +127,15 @@ export class AddonBlockRecentlyAccessedCoursesComponent extends CoreBlockBaseCom
     /**
      * @inheritdoc
      */
-    protected async fetchContent(): Promise<void> {
+    protected async fetchContent(loadWatcher: PageLoadWatcher): Promise<void> {
         const showCategories = this.block.configsRecord && this.block.configsRecord.displaycategories &&
             this.block.configsRecord.displaycategories.value == '1';
 
         let recentCourses: CoreCourseSummaryData[] = [];
         try {
-            recentCourses = await CoreCourses.getRecentCourses();
+            recentCourses = await loadWatcher.watchRequest(
+                CoreCourses.getRecentCoursesObservables({ readingStrategy: loadWatcher.getReadingStrategy() }),
+            );
         } catch {
             // WS is failing on 3.7 and bellow, use a fallback.
             this.courses = await CoreCoursesHelper.getUserCoursesWithOptions('lastaccess', 10, undefined, showCategories);

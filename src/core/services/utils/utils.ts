@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Injectable } from '@angular/core';
+import { Injectable, Type } from '@angular/core';
 import { InAppBrowserObject, InAppBrowserOptions } from '@ionic-native/in-app-browser';
 import { FileEntry } from '@ionic-native/file/ngx';
 import { Subscription } from 'rxjs';
@@ -55,6 +55,7 @@ export class CoreUtilsProvider {
 
     constructor() {
         this.logger = CoreLogger.getInstance('CoreUtilsProvider');
+        (<any>window).utils = this;
     }
 
     /**
@@ -1770,6 +1771,17 @@ export class CoreUtilsProvider {
         const openFileAction = options.iOSOpenFileAction ?? CoreConstants.CONFIG.iOSDefaultOpenFileAction;
 
         return CoreApp.isIOS() && openFileAction == OpenFileAction.OPEN_WITH;
+    }
+
+    /**
+     * Check if a certain class (not an instance) is a subclass of or equal to another class.
+     *
+     * @param subclassCandidate Class to check.
+     * @param parent Parent class.
+     * @return Whether it's a subclass or the same class.
+     */
+    isSubclassOrEqual(subclassCandidate: Type<unknown>, parent: Type<unknown>): boolean {
+        return subclassCandidate === parent || subclassCandidate.prototype instanceof parent;
     }
 
 }

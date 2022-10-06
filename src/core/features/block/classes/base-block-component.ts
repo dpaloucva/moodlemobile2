@@ -23,6 +23,8 @@ import { ContextLevel } from '@/core/constants';
 import { CoreNavigationOptions } from '@services/navigator';
 import { AsyncComponent } from '@classes/async-component';
 import { CorePromisedValue } from '@classes/promised-value';
+import { PageLoadWatcher } from '@classes/page-load-watcher';
+import { PageLoadsManager } from '@classes/page-loads-manager';
 
 /**
  * Template class to easily create components for blocks.
@@ -43,17 +45,23 @@ export abstract class CoreBlockBaseComponent implements OnInit, ICoreBlockCompon
     loaded = false; // If false, the UI should display a loading.
     protected fetchContentDefaultError = ''; // Default error to show when loading contents.
     protected onReadyPromise = new CorePromisedValue<void>();
+    protected firstLoadWatcher?: PageLoadWatcher;
+    protected loadsManager: PageLoadsManager;
 
     protected logger: CoreLogger;
 
-    constructor(@Optional() @Inject('') loggerName: string = 'AddonBlockComponent') {
+    constructor(@Optional() @Inject('') loggerName: string = 'AddonBlockComponent', @Optional() loadsManager?: PageLoadsManager) {
         this.logger = CoreLogger.getInstance(loggerName);
+
+        this.loadsManager = loadsManager ?? new PageLoadsManager();
     }
 
     /**
-     * Component being initialized.
+     * @inheritdoc
      */
     async ngOnInit(): Promise<void> {
+        this.startOnInit();
+
         if (this.block.configs && this.block.configs.length > 0) {
             this.block.configs.forEach((config) => {
                 config.value = CoreTextUtils.parseJSON(config.value);
@@ -63,6 +71,17 @@ export abstract class CoreBlockBaseComponent implements OnInit, ICoreBlockCompon
         }
 
         await this.loadContent();
+    }
+
+    /**
+     * Function to be called when ngOnInit starts. If a block overrides ngOnInit, this function should be called at the beginning.
+     */
+    protected startOnInit(): void {
+        if (this.firstLoadWatcher) {
+            return;
+        }
+
+        this.firstLoadWatcher = this.loadsManager.startComponentLoad(this);
     }
 
     /**
@@ -98,9 +117,12 @@ export abstract class CoreBlockBaseComponent implements OnInit, ICoreBlockCompon
      * Loads the component contents and shows the corresponding error.
      */
     protected async loadContent(): Promise<void> {
+        const loadWatcher = this.firstLoadWatcher ?? this.loadsManager.startComponentLoad(this);
+        this.firstLoadWatcher = undefined;
+
         // Wrap the call in a try/catch so the workflow isn't interrupted if an error occurs.
         try {
-            await this.fetchContent();
+            await this.fetchContent(loadWatcher);
         } catch (error) {
             // An error ocurred in the function, log the error and just resolve the promise so the workflow continues.
             this.logger.error(error);
@@ -116,9 +138,11 @@ export abstract class CoreBlockBaseComponent implements OnInit, ICoreBlockCompon
     /**
      * Download the component contents.
      *
+     * @param loadWatcher Load watcher to manage the requests.
      * @return Promise resolved when done.
      */
-    protected async fetchContent(): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    protected async fetchContent(loadWatcher: PageLoadWatcher): Promise<void> {
         return;
     }
 

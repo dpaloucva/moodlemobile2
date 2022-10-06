@@ -18,12 +18,16 @@ import { IonRefresher } from '@ionic/angular';
 import { CoreCourses } from '../../services/courses';
 import { CoreEventObserver, CoreEvents } from '@singletons/events';
 import { CoreSites } from '@services/sites';
-import { CoreCoursesDashboard } from '@features/courses/services/dashboard';
+import { CoreCoursesDashboard, CoreCoursesDashboardBlocks } from '@features/courses/services/dashboard';
 import { CoreDomUtils } from '@services/utils/dom';
 import { CoreCourseBlock } from '@features/course/services/course';
 import { CoreBlockComponent } from '@features/block/components/block/block';
 import { CoreNavigator } from '@services/navigator';
 import { CoreBlockDelegate } from '@features/block/services/block-delegate';
+import { PageLoadsManager } from '@classes/page-loads-manager';
+import { Subscription } from 'rxjs';
+import { CorePromisedValue } from '@classes/promised-value';
+import { AsyncComponent } from '@classes/async-component';
 
 /**
  * Page that displays the dashboard page.
@@ -31,8 +35,12 @@ import { CoreBlockDelegate } from '@features/block/services/block-delegate';
 @Component({
     selector: 'page-core-courses-dashboard',
     templateUrl: 'dashboard.html',
+    providers: [{
+        provide: PageLoadsManager,
+        useClass: PageLoadsManager,
+    }],
 })
-export class CoreCoursesDashboardPage implements OnInit, OnDestroy {
+export class CoreCoursesDashboardPage implements OnInit, OnDestroy, AsyncComponent {
 
     @ViewChildren(CoreBlockComponent) blocksComponents?: QueryList<CoreBlockComponent>;
 
@@ -43,11 +51,13 @@ export class CoreCoursesDashboardPage implements OnInit, OnDestroy {
     downloadCoursesEnabled = false;
     userId?: number;
     blocks: Partial<CoreCourseBlock>[] = [];
-    loaded = false;
+    showLoading = true;
 
     protected updateSiteObserver: CoreEventObserver;
+    protected onReadyPromise = new CorePromisedValue<void>();
+    protected loadsManagerSubscription: Subscription;
 
-    constructor() {
+    constructor(protected loadsManager: PageLoadsManager) {
         // Refresh the enabled flags if site is updated.
         this.updateSiteObserver = CoreEvents.on(CoreEvents.SITE_UPDATED, () => {
             this.searchEnabled = !CoreCourses.isSearchCoursesDisabledInSite();
@@ -55,6 +65,11 @@ export class CoreCoursesDashboardPage implements OnInit, OnDestroy {
             this.downloadCoursesEnabled = !CoreCourses.isDownloadCoursesDisabledInSite();
 
         }, CoreSites.getCurrentSiteId());
+
+        this.loadsManagerSubscription = this.loadsManager.onRefreshPage.subscribe(() => {
+            this.showLoading = true;
+            this.loadContent();
+        });
     }
 
     /**
@@ -65,7 +80,7 @@ export class CoreCoursesDashboardPage implements OnInit, OnDestroy {
         this.downloadCourseEnabled = !CoreCourses.isDownloadCourseDisabledInSite();
         this.downloadCoursesEnabled = !CoreCourses.isDownloadCoursesDisabledInSite();
 
-        this.loadContent();
+        this.loadContent(true);
     }
 
     /**
@@ -73,7 +88,9 @@ export class CoreCoursesDashboardPage implements OnInit, OnDestroy {
      *
      * @return Promise resolved when done.
      */
-    protected async loadContent(): Promise<void> {
+    protected async loadContent(firstLoad = false): Promise<void> {
+        const loadWatcher = this.loadsManager.startPageLoad(this, !!firstLoad);
+
         const available = await CoreCoursesDashboard.isAvailable();
         const disabled = await CoreCoursesDashboard.isDisabled();
 
@@ -81,9 +98,16 @@ export class CoreCoursesDashboardPage implements OnInit, OnDestroy {
             this.userId = CoreSites.getCurrentSiteUserId();
 
             try {
-                const blocks = await CoreCoursesDashboard.getDashboardBlocks();
+                const blocks = await loadWatcher.watchRequest(
+                    CoreCoursesDashboard.getDashboardBlocksObservable({
+                        readingStrategy: loadWatcher.getReadingStrategy(),
+                    }),
+                    (prevBlocks, newBlocks) => this.blocksHaveMeaningfulChanges(prevBlocks, newBlocks),
+                );
 
                 this.blocks = blocks.mainBlocks;
+                console.error('BLOCKS', this.blocks);
+                (<any>window).blocks = this.blocks;
 
                 this.hasMainBlocks = CoreBlockDelegate.hasSupportedBlock(blocks.mainBlocks);
                 this.hasSideBlocks = CoreBlockDelegate.hasSupportedBlock(blocks.sideBlocks);
@@ -101,7 +125,8 @@ export class CoreCoursesDashboardPage implements OnInit, OnDestroy {
             this.blocks = [];
         }
 
-        this.loaded = true;
+        this.showLoading = false;
+        this.onReadyPromise.resolve();
     }
 
     /**
@@ -152,10 +177,51 @@ export class CoreCoursesDashboardPage implements OnInit, OnDestroy {
     }
 
     /**
+     * Compare if the WS data has meaningful changes for the user.
+     *
+     * @param previousBlocks Previous blocks.
+     * @param newBlocks New blocks.
+     * @return Whether it has meaningful changes.
+     */
+    protected async blocksHaveMeaningfulChanges(
+        previousBlocks: CoreCoursesDashboardBlocks,
+        newBlocks: CoreCoursesDashboardBlocks,
+    ): Promise<boolean> {
+        if (previousBlocks.mainBlocks.length !== newBlocks.mainBlocks.length) {
+            return true;
+        }
+
+        const previousMainBlocks = Array.from(previousBlocks.mainBlocks).sort((a, b) => a.name.localeCompare(b.name));
+        const newMainBlocks = Array.from(newBlocks.mainBlocks).sort((a, b) => a.name.localeCompare(b.name));
+        console.error('PREV BLOCKS', previousMainBlocks);
+        console.error('new BLOCKS', newMainBlocks);
+
+        const haveChangesResults = await Promise.all(previousMainBlocks.map((previousBlock, index) => {
+            const newBlock = newMainBlocks[index];
+
+            if (previousBlock.name !== newBlock.name) {
+                return true;
+            }
+
+            return CoreBlockDelegate.blockHasMeaningfulChanges(previousBlock, newBlock, 'user', this.userId ?? 0);
+        }));
+        console.error('RESULTS', haveChangesResults);
+
+        return haveChangesResults.includes(true);
+    }
+
+    /**
      * Component being destroyed.
      */
     ngOnDestroy(): void {
         this.updateSiteObserver.off();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    async ready(): Promise<void> {
+        return await this.onReadyPromise;
     }
 
 }
