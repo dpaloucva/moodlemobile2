@@ -20,16 +20,16 @@
         <core-tabs [hideUntil]="true">
 
             <!-- Contacts tab. -->
-            <core-tab [title]="'addon.messages.contacts' | translate" (ionSelect)="selectTab('confirmed')">
+            <core-tab [title]="'addon.messages.contacts' | translate" (ionSelect)="selectTab(contactsType)">
                 <ng-template>
-                    <ion-refresher slot="fixed" [disabled]="!confirmedLoaded" (ionRefresh)="refreshData($event.target)">
+                    <ion-refresher slot="fixed" [disabled]="!contactsManager.contactsLoaded" (ionRefresh)="refreshData($event.target)">
                         <ion-refresher-content pullingText="{{ 'core.pulltorefresh' | translate }}"></ion-refresher-content>
                     </ion-refresher>
-                    <core-loading [hideUntil]="confirmedLoaded">
-                        <ion-list class="ion-no-margin" *ngIf="confirmedContacts.length">
-                            <ion-item class="ion-text-wrap addon-messages-conversation-item" (click)="selectUser(contact.id)" button
-                                *ngFor="let contact of confirmedContacts" [attr.aria-label]="contact.fullname" detail="true"
-                                [attr.aria-current]="contact.id == selectedUserId ? 'page' : 'false'">
+                    <core-loading [hideUntil]="contactsManager.contactsLoaded">
+                        <ion-list class="ion-no-margin" *ngIf="!contactsManager.contactsEmpty">
+                            <ion-item class="ion-text-wrap addon-messages-conversation-item" (click)="contactsManager.select(contact)"
+                                button *ngFor="let contact of contactsManager.contacts" [attr.aria-label]="contact.fullname" detail="true"
+                                [attr.aria-current]="contactsManager.getItemAriaCurrent(contact)">
                                 <core-user-avatar slot="start" [user]="contact" [checkOnline]="contact.showonlinestatus"
                                     [linkProfile]="false">
                                 </core-user-avatar>
@@ -45,29 +45,30 @@
                             </ion-item>
                         </ion-list>
 
-                        <core-empty-box *ngIf="!confirmedContacts.length" icon="far-address-book"
+                        <core-empty-box *ngIf="contactsManager.contactsEmpty" icon="far-address-book"
                             [message]="'addon.messages.nocontactsgetstarted' | translate">
                         </core-empty-box>
 
-                        <core-infinite-loading [enabled]="confirmedCanLoadMore" (action)="loadMore($event)" [error]="confirmedLoadMoreError"
-                            position="bottom">
+                        <core-infinite-loading [enabled]="contactsManager.contactsLoaded && !contactsManager.contactsCompleted"
+                            (action)="loadMoreData($event)" [error]="contactsManager.contactsFetchFailed" position="bottom">
                         </core-infinite-loading>
                     </core-loading>
                 </ng-template>
             </core-tab>
 
             <!-- Requests tab. -->
-            <core-tab [title]="'addon.messages.requests' | translate" (ionSelect)="selectTab('requests')" [badge]="requestsBadge"
+            <core-tab [title]="'addon.messages.requests' | translate" (ionSelect)="selectTab(requestsType)" [badge]="requestsBadge"
                 badgeA11yText="addon.messages.pendingcontactrequests">
                 <ng-template>
-                    <ion-refresher slot="fixed" [disabled]="!requestsLoaded" (ionRefresh)="refreshData($event.target)">
+                    <ion-refresher slot="fixed" [disabled]="!contactsManager.requestsLoaded" (ionRefresh)="refreshData($event.target)">
                         <ion-refresher-content pullingText="{{ 'core.pulltorefresh' | translate }}"></ion-refresher-content>
                     </ion-refresher>
-                    <core-loading [hideUntil]="requestsLoaded">
-                        <ion-list class="ion-no-margin" *ngIf="requests.length">
-                            <ion-item class="ion-text-wrap addon-messages-conversation-item" *ngFor="let request of requests"
-                                [attr.aria-label]="request.fullname" (click)="selectUser(request.id)" button
-                                [attr.aria-current]="request.id == selectedUserId ? 'page' : 'false'" detail="true">
+                    <core-loading [hideUntil]="contactsManager.requestsLoaded">
+                        <ion-list class="ion-no-margin" *ngIf="!contactsManager.requestsEmpty">
+                            <ion-item class="ion-text-wrap addon-messages-conversation-item"
+                                *ngFor="let request of contactsManager.requests" [attr.aria-label]="request.fullname"
+                                (click)="contactsManager.select(request)" button
+                                [attr.aria-current]="contactsManager.getItemAriaCurrent(request)" detail="true">
                                 <core-user-avatar slot="start" [user]="request" [linkProfile]="false"></core-user-avatar>
                                 <ion-label>
                                     <core-format-text [text]="request.fullname" contextLevel="system" [contextInstanceId]="0">
@@ -78,11 +79,11 @@
                                 </ion-label>
                             </ion-item>
                         </ion-list>
-                        <core-empty-box *ngIf="!requests.length" icon="far-address-book"
+                        <core-empty-box *ngIf="contactsManager.requestsEmpty" icon="far-address-book"
                             [message]="'addon.messages.nocontactrequests' | translate">
                         </core-empty-box>
-                        <core-infinite-loading [enabled]="requestsCanLoadMore" (action)="loadMore($event)" [error]="requestsLoadMoreError"
-                            position="bottom">
+                        <core-infinite-loading [enabled]="contactsManager.requestsLoaded && !contactsManager.requestsCompleted"
+                            (action)="loadMoreData($event)" [error]="contactsManager.requestsFetchFailed" position="bottom">
                         </core-infinite-loading>
                     </core-loading>
                 </ng-template>

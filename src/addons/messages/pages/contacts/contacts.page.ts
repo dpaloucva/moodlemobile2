@@ -21,10 +21,14 @@ import {
     AddonMessagesProvider,
 } from '../../services/messages';
 import { CoreNavigator } from '@services/navigator';
-import { CoreScreen } from '@services/screen';
 import { CoreDomUtils } from '@services/utils/dom';
 import { IonRefresher } from '@ionic/angular';
 import { CoreSplitViewComponent } from '@components/split-view/split-view';
+import { CoreListItemsManager } from '@classes/items-management/list-items-manager';
+import { AddonMessagesContactsSource } from '@addons/messages/classes/contacts-source';
+import { AddonMessagesContactRequestsSource } from '@addons/messages/classes/contact-requests-source';
+import { ActivatedRoute } from '@angular/router';
+import { CoreRoutedItemsManagerSourcesTracker } from '@classes/items-management/routed-items-manager-sources-tracker';
 
 /**
  * Page that displays contacts and contact requests.
@@ -40,21 +44,10 @@ export class AddonMessagesContactsPage implements OnInit, OnDestroy {
 
     @ViewChild(CoreSplitViewComponent) splitView!: CoreSplitViewComponent;
 
-    selected: 'confirmed' | 'requests' = 'confirmed';
     requestsBadge = '';
-    selectedUserId?: number; // User id of the conversation opened in the split view.
-
-    confirmedLoaded = false;
-    confirmedInitialising = false;
-    confirmedCanLoadMore = false;
-    confirmedLoadMoreError = false;
-    confirmedContacts: AddonMessagesConversationMember[] = [];
-
-    requestsLoaded = false;
-    requestsInitialising = false;
-    requestsCanLoadMore = false;
-    requestsLoadMoreError = false;
-    requests: AddonMessagesConversationMember[] = [];
+    contactsManager: AddonMessagesContactsManager;
+    contactsType = AddonMessagesContactsListTypes.CONTACTS;
+    requestsType = AddonMessagesContactsListTypes.REQUESTS;
 
     protected siteId: string;
     protected contactRequestsCountObserver: CoreEventObserver;
@@ -64,43 +57,46 @@ export class AddonMessagesContactsPage implements OnInit, OnDestroy {
 
         this.siteId = CoreSites.getCurrentSiteId();
 
+        this.contactsManager = new AddonMessagesContactsManager(
+            CoreRoutedItemsManagerSourcesTracker.getOrCreateSource(AddonMessagesContactsSource, []),
+            AddonMessagesContactsPage,
+            CoreRoutedItemsManagerSourcesTracker.getOrCreateSource(AddonMessagesContactRequestsSource, []),
+        );
+
         // Update the contact requests badge.
         this.contactRequestsCountObserver = CoreEvents.on(
             AddonMessagesProvider.CONTACT_REQUESTS_COUNT_EVENT,
             (data) => {
-                this.requestsBadge = data.count > 0 ? String(data.count) : '';
+                const newCount = data.count > 0 ? String(data.count) : '';
+                if (newCount === this.requestsBadge) {
+                    return;
+                }
+
+                this.requestsBadge = newCount;
+                this.refreshRequests();
             },
             this.siteId,
         );
 
-        // Update block status of a user.
+        // Update status of a user.
         this.memberInfoObserver = CoreEvents.on(
             AddonMessagesProvider.MEMBER_INFO_CHANGED_EVENT,
             (data) => {
                 if (data.userBlocked || data.userUnblocked) {
-                    const user = this.confirmedContacts.find((user) => user.id == data.userId);
+                    const user = this.contactsManager.contacts.find((user) => user.id == data.userId);
                     if (user) {
                         user.isblocked = !!data.userBlocked;
                     }
-                } else if (data.contactRemoved) {
-                    const index = this.confirmedContacts.findIndex((contact) => contact.id == data.userId);
-                    if (index >= 0) {
-                        this.confirmedContacts.splice(index, 1);
-                    }
-                } else if (data.contactRequestConfirmed) {
-                    this.confirmedFetchData(true);
+                } else if (data.contactRemoved || data.contactRequestConfirmed) {
+                    this.refreshContacts();
                 }
 
                 if (data.contactRequestConfirmed || data.contactRequestDeclined) {
-                    const index = this.requests.findIndex((request) => request.id == data.userId);
-                    if (index >= 0) {
-                        this.requests.splice(index, 1);
-                    }
+                    this.refreshRequests();
                 }
             },
             CoreSites.getCurrentSiteId(),
         );
-
     }
 
     /**
@@ -109,144 +105,85 @@ export class AddonMessagesContactsPage implements OnInit, OnDestroy {
     async ngOnInit(): Promise<void> {
         AddonMessages.getContactRequestsCount(this.siteId); // Badge already updated by the observer.
 
-        this.selected === 'confirmed'
-            ? await this.initConfirmed()
-            : await this.initRequests();
+        // Always try to get latest data from server when opening the page.
+        await this.contactsManager.invalidateCache(true);
+
+        await this.fetchData();
+
+        await this.contactsManager.start(this.splitView);
     }
 
     /**
-     * Initialise confirmed contacts.
+     * Fetch data.
      */
-    async initConfirmed(): Promise<void> {
-        if (this.confirmedInitialising) {
-            return;
-        }
-
+    protected async fetchData(): Promise<void> {
         try {
-            this.confirmedInitialising = true;
-
-            await this.confirmedFetchData();
-
-            if (this.confirmedContacts.length && CoreScreen.isTablet) {
-                this.selectUser(this.confirmedContacts[0].id, true);
-            }
-        } finally {
-            this.confirmedInitialising = false;
-            this.confirmedLoaded = true;
-        }
-    }
-
-    /**
-     * Initialise contact requests.
-     */
-    async initRequests(): Promise<void> {
-        if (this.requestsInitialising) {
-            return;
-        }
-
-        try {
-            this.requestsInitialising = true;
-
-            await this.requestsFetchData();
-
-            if (this.requests.length && CoreScreen.isTablet) {
-                this.selectUser(this.requests[0].id, true);
-            }
-        } finally {
-            this.requestsInitialising = false;
-            this.requestsLoaded = true;
-        }
-    }
-
-    /**
-     * Fetch contacts.
-     *
-     * @param refresh True if we are refreshing contacts, false if we are loading more.
-     * @returns Promise resolved when done.
-     */
-    async confirmedFetchData(refresh: boolean = false): Promise<void> {
-        this.confirmedLoadMoreError = false;
-
-        const limitFrom = refresh ? 0 : this.confirmedContacts.length;
-
-        if (limitFrom === 0) {
-            // Always try to get latest data from server.
-            await AddonMessages.invalidateUserContacts();
-        }
-
-        try {
-            const result = await AddonMessages.getUserContacts(limitFrom);
-            this.confirmedContacts = refresh ? result.contacts : this.confirmedContacts.concat(result.contacts);
-            this.confirmedCanLoadMore = result.canLoadMore;
+            await this.contactsManager.load();
         } catch (error) {
-            this.confirmedLoadMoreError = true;
             CoreDomUtils.showErrorModalDefault(error, 'addon.messages.errorwhileretrievingcontacts', true);
         }
     }
 
     /**
-     * Fetch contact requests.
-     *
-     * @param refresh True if we are refreshing contact requests, false if we are loading more.
-     * @returns Promise resolved when done.
-     */
-    async requestsFetchData(refresh: boolean = false): Promise<void> {
-        this.requestsLoadMoreError = false;
-
-        const limitFrom = refresh ? 0 : this.requests.length;
-
-        if (limitFrom === 0) {
-            // Always try to get latest data from server.
-            await AddonMessages.invalidateContactRequestsCache();
-        }
-
-        try {
-            const result = await AddonMessages.getContactRequests(limitFrom);
-            this.requests = refresh ? result.requests : this.requests.concat(result.requests);
-            this.requestsCanLoadMore = result.canLoadMore;
-        } catch (error) {
-            this.requestsLoadMoreError = true;
-            CoreDomUtils.showErrorModalDefault(error, 'addon.messages.errorwhileretrievingcontacts', true);
-        }
-    }
-
-    /**
-     * Refresh contacts or requests.
+     * Refresh data.
      *
      * @param refresher Refresher.
-     * @returns Promise resolved when done.
      */
     async refreshData(refresher?: IonRefresher): Promise<void> {
         try {
-            if (this.selected == 'confirmed') {
-                // No need to invalidate contacts, we always try to get the latest.
-                await this.confirmedFetchData(true);
-            } else {
-                // Refresh the number of contacts requests to update badges.
-                AddonMessages.refreshContactRequestsCount();
+            await this.contactsManager.getSource().invalidateCache();
 
-                // No need to invalidate contact requests, we always try to get the latest.
-                await this.requestsFetchData(true);
-            }
+            await this.contactsManager.reload();
+        } catch (error) {
+            CoreDomUtils.showErrorModalDefault(error, 'addon.messages.errorwhileretrievingcontacts', true);
         } finally {
             refresher?.complete();
         }
     }
 
     /**
-     * Load more contacts or requests.
+     * Refresh contacts.
+     */
+    async refreshContacts(): Promise<void> {
+        if (this.contactsManager.selectedListType === AddonMessagesContactsListTypes.CONTACTS) {
+            await this.refreshData();
+
+            return;
+        }
+
+        // Not current list, just reset it so it's reloaded the next time.
+        if (this.contactsManager.contactsLoaded) {
+            await this.contactsManager.contactsSource.invalidateCache();
+            this.contactsManager.contactsSource.reset();
+        }
+    }
+
+    /**
+     * Refresh contacts.
+     */
+    async refreshRequests(): Promise<void> {
+        if (this.contactsManager.selectedListType === AddonMessagesContactsListTypes.REQUESTS) {
+            await this.refreshData();
+
+            return;
+        }
+
+        // Not current list, just reset it so it's reloaded the next time.
+        if (this.contactsManager.requestsLoaded) {
+            await this.contactsManager.requestsSource.invalidateCache();
+            this.contactsManager.requestsSource.reset();
+        }
+    }
+
+    /**
+     * Load more data.
      *
      * @param infiniteComplete Infinite scroll complete function. Only used from core-infinite-loading.
      * @returns Resolved when done.
      */
-    async loadMore(infiniteComplete?: () => void): Promise<void> {
+    async loadMoreData(infiniteComplete?: () => void): Promise<void> {
         try {
-            if (this.selected == 'confirmed') {
-                // No need to invalidate contacts, we always try to get the latest.
-                await this.confirmedFetchData();
-            } else {
-                await this.requestsFetchData();
-            }
+            await this.fetchData();
         } finally {
             infiniteComplete && infiniteComplete();
         }
@@ -259,45 +196,17 @@ export class AddonMessagesContactsPage implements OnInit, OnDestroy {
         CoreNavigator.navigateToSitePath('search');
     }
 
-    selectTab(selected: string): void {
-        if (selected !== 'confirmed' && selected !== 'requests') {
-            return;
-        }
-
-        this.selected = selected;
-
-        if (this.selected == 'confirmed' && !this.confirmedLoaded) {
-            this.initConfirmed();
-        }
-
-        if (this.selected == 'requests' && !this.requestsLoaded) {
-            this.initRequests();
-        }
-    }
-
     /**
-     * Set the selected user and open the conversation in the split view if needed.
+     * Select a tab.
      *
-     * @param userId Id of the selected user, undefined to use the last selected user in the tab.
-     * @param onInit Whether the contact was selected on initial load.
+     * @param selected Tab to select.
      */
-    selectUser(userId: number, onInit = false): void {
-        if (userId == this.selectedUserId && CoreScreen.isTablet) {
-            // No user conversation to open or it is already opened.
+    selectTab(selected: string): void {
+        if (selected !== AddonMessagesContactsListTypes.CONTACTS && selected !== AddonMessagesContactsListTypes.REQUESTS) {
             return;
         }
 
-        if (onInit && CoreScreen.isMobile) {
-            // Do not open a conversation by default when split view is not visible.
-            return;
-        }
-
-        this.selectedUserId = userId;
-
-        const path = CoreNavigator.getRelativePathToParent('/messages/contacts') + `discussion/user/${userId}`;
-        CoreNavigator.navigate(path, {
-            reset: CoreScreen.isTablet && !!this.splitView && !this.splitView.isNested,
-        });
+        this.contactsManager.setSelectedListType(selected);
     }
 
     /**
@@ -307,4 +216,157 @@ export class AddonMessagesContactsPage implements OnInit, OnDestroy {
         this.contactRequestsCountObserver?.off();
     }
 
+}
+
+/**
+ * Contacts and requests manager.
+ */
+class AddonMessagesContactsManager
+    extends CoreListItemsManager<
+    AddonMessagesConversationMember,
+    AddonMessagesContactsSource | AddonMessagesContactRequestsSource
+    > {
+
+    selectedListType: AddonMessagesContactsListTypes = AddonMessagesContactsListTypes.CONTACTS;
+
+    protected requestsUnsubscribe: () => void;
+
+    constructor(
+        public contactsSource: AddonMessagesContactsSource,
+        pageRouteLocator: unknown | ActivatedRoute,
+        public requestsSource: AddonMessagesContactRequestsSource,
+    ) {
+        super(contactsSource, pageRouteLocator);
+
+        this.requestsUnsubscribe = requestsSource.addListener({
+            onItemsUpdated: () => this.onSourceItemsUpdated(),
+            onReset: () => this.onSourceReset(),
+        });
+    }
+
+    /**
+     * Get source.
+     *
+     * @returns Source.
+     */
+    getSource(): AddonMessagesContactsSource | AddonMessagesContactRequestsSource {
+        return this.selectedListType === AddonMessagesContactsListTypes.CONTACTS ? this.contactsSource : this.requestsSource;
+    }
+
+    get contacts(): AddonMessagesConversationMember[] {
+        return this.contactsSource.getItems() ?? [];
+    }
+
+    get contactsLoaded(): boolean {
+        return this.contactsSource.getItems() !== null;
+    }
+
+    get contactsCompleted(): boolean {
+        return this.contactsSource.isCompleted();
+    }
+
+    get contactsEmpty(): boolean {
+        return this.contacts.length === 0;
+    }
+
+    get contactsFetchFailed(): boolean {
+        return this.contactsSource.fetchFailed;
+    }
+
+    get requests(): AddonMessagesConversationMember[] {
+        return this.requestsSource.getItems() ?? [];
+    }
+
+    get requestsLoaded(): boolean {
+        return this.requestsSource.getItems() !== null;
+    }
+
+    get requestsCompleted(): boolean {
+        return this.requestsSource.isCompleted();
+    }
+
+    get requestsEmpty(): boolean {
+        return this.requests.length === 0;
+    }
+
+    get requestsFetchFailed(): boolean {
+        return this.requestsSource.fetchFailed;
+    }
+
+    /**
+     * Change selected list type.
+     *
+     * @param newValue Value to set.
+     */
+    setSelectedListType(newValue: AddonMessagesContactsListTypes): void {
+        if (this.selectedListType === newValue) {
+            return;
+        }
+
+        this.selectedListType = newValue;
+
+        if (
+            (this.selectedListType === AddonMessagesContactsListTypes.CONTACTS && !this.contactsLoaded) ||
+            (this.selectedListType === AddonMessagesContactsListTypes.REQUESTS && !this.requestsLoaded)
+        ) {
+            this.load();
+        }
+    }
+
+    /**
+     * Invalidate cache.
+     *
+     * @param allLists True to invalidate all lists, false to invalidate active one.
+     */
+    async invalidateCache(allLists = false): Promise<void> {
+        const promises: Promise<unknown>[] = [];
+
+        if (allLists || this.selectedListType === AddonMessagesContactsListTypes.CONTACTS) {
+            promises.push(AddonMessages.invalidateUserContacts());
+        }
+
+        if (allLists || this.selectedListType === AddonMessagesContactsListTypes.REQUESTS) {
+            promises.push(AddonMessages.invalidateContactRequestsCache());
+        }
+
+        await Promise.all(promises);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected onSourceItemsUpdated(): void {
+        super.onSourceItemsUpdated(this.contacts.concat(this.requests));
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected onSourceReset(): void {
+        if (!this.contactsLoaded && !this.requestsLoaded) {
+            // Both sources are resetted.
+            return super.onSourceReset();
+        }
+
+        // One of the sources still has items, don't reset the manager.
+        this.onSourceItemsUpdated();
+        if (this.getSource().getItems() === null) {
+            this.selectedItem = null;
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    destroy(): void {
+        super.destroy();
+
+        this.setSource(null);
+    }
+
+}
+
+export enum AddonMessagesContactsListTypes {
+    CONTACTS = 'contacts',
+    REQUESTS = 'requests',
 }
