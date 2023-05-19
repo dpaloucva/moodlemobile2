@@ -33,12 +33,12 @@ import { AddonCompetencyCourseCompetenciesSource } from '@addons/competency/clas
 @Component({
     selector: 'page-addon-competency-coursecompetencies',
     templateUrl: 'coursecompetencies.html',
-})
+    })
 export class AddonCompetencyCourseCompetenciesPage implements OnInit, OnDestroy {
 
     competencies!: CoreListItemsManager<
-        AddonCompetencyDataForCourseCompetenciesPageCompetency,
-        AddonCompetencyCourseCompetenciesSource
+    AddonCompetencyDataForCourseCompetenciesPageCompetency,
+    AddonCompetencyCourseCompetenciesSource
     >;
 
     constructor() {

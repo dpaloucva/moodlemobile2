@@ -46,7 +46,7 @@ import {
 @Component({
     selector: 'page-addon-mod-glossary-entry',
     templateUrl: 'entry.html',
-})
+    })
 export class AddonModGlossaryEntryPage implements OnInit, OnDestroy {
 
     @ViewChild(CoreCommentsCommentsComponent) comments?: CoreCommentsCommentsComponent;
