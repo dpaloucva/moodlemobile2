@@ -17,6 +17,7 @@ import { CoreLogger } from '@singletons/logger';
 import { Http } from '@singletons';
 import { CoreConstants } from '@/core/constants';
 import { CorePromisedValue } from '@classes/promised-value';
+import { firstValueFrom } from '../utils/rxjs';
 
 /**
  * Directive to enable font-awesome 6.3 as ionicons.
@@ -28,7 +29,7 @@ import { CorePromisedValue } from '@classes/promised-value';
  */
 @Directive({
     selector: 'ion-icon[name]',
-})
+    })
 export class CoreFaIconDirective implements AfterViewInit, OnChanges {
 
     /**
@@ -166,9 +167,9 @@ export class CoreFaIconDirective implements AfterViewInit, OnChanges {
         CoreFaIconDirective.aliases = new CorePromisedValue();
 
         try {
-            const aliases = await Http.get<Record<string, string>>('assets/fonts/font-awesome/aliases.json', {
+            const aliases = await firstValueFrom(Http.get<Record<string, string>>('assets/fonts/font-awesome/aliases.json', {
                 responseType: 'json',
-            }).toPromise();
+            }));
 
             CoreFaIconDirective.aliases.resolve(aliases);
 

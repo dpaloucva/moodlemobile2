@@ -66,7 +66,7 @@ function expectBool (str) {
     throw SyntaxError('Invalid bool value, expected 0 or 1')
   }
 
-  return [ boolMatch === '1', match.length ]
+  return [ boolMatch === '1', match?.length ?? 0 ]
 }
 
 function expectInt (str) {
@@ -77,7 +77,7 @@ function expectInt (str) {
     throw SyntaxError('Expected an integer value')
   }
 
-  return [ parseInt(intMatch, 10), match.length ]
+  return [ parseInt(intMatch, 10), match?.length ?? 0 ]
 }
 
 function expectFloat (str) {
@@ -105,7 +105,7 @@ function expectFloat (str) {
       break
   }
 
-  return [ floatValue, match.length ]
+  return [ floatValue, match?.length ?? 0 ]
 }
 
 function readBytes (str, len, escapedString = false) {
@@ -299,7 +299,7 @@ function expectArray (str, cache) {
     throw SyntaxError('Expected array length annotation')
   }
 
-  str = str.substring(arrayLiteralBeginMatch.length)
+  str = str.substring(arrayLiteralBeginMatch?.length)
 
   const array = expectArrayItems(str, parseInt(arrayLengthMatch, 10), cache)
 
@@ -308,7 +308,7 @@ function expectArray (str, cache) {
     throw SyntaxError('Expected }')
   }
 
-  return [ array[0], arrayLiteralBeginMatch.length + (array[1] as number) + 1 ] // jump over }
+  return [ array[0], (arrayLiteralBeginMatch?.length ?? 0) + (array[1] as number) + 1 ] // jump over }
 }
 
 function expectArrayItems (str, expectedItems = 0, cache) {

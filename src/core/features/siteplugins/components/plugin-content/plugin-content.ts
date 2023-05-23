@@ -30,7 +30,7 @@ import { CoreEvents } from '@singletons/events';
     selector: 'core-site-plugins-plugin-content',
     templateUrl: 'core-siteplugins-plugin-content.html',
     styles: [':host { display: contents; }'],
-})
+    })
 export class CoreSitePluginsPluginContentComponent implements OnInit, DoCheck {
 
     // Get the compile element. Don't set the right type to prevent circular dependencies.
@@ -211,6 +211,7 @@ export class CoreSitePluginsPluginContentComponent implements OnInit, DoCheck {
         this.dataLoaded = false;
         this.preSets = preSets || this.preSets;
         if (jsData) {
+            this.data = this.data || {};
             Object.assign(this.data, jsData);
         }
 

@@ -18,16 +18,16 @@ import { CoreEmulatorHelper } from './services/emulator-helper';
 import { CoreEmulatorComponentsModule } from './components/components.module';
 
 // Ionic Native services.
-import { Camera } from '@ionic-native/camera/ngx';
-import { Clipboard } from '@ionic-native/clipboard/ngx';
-import { File } from '@ionic-native/file/ngx';
-import { FileOpener } from '@ionic-native/file-opener/ngx';
-import { FileTransfer } from '@ionic-native/file-transfer/ngx';
-import { Geolocation } from '@ionic-native/geolocation/ngx';
-import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
-import { LocalNotifications } from '@ionic-native/local-notifications/ngx';
-import { MediaCapture } from '@ionic-native/media-capture/ngx';
-import { Zip } from '@ionic-native/zip/ngx';
+import { Camera } from '@awesome-cordova-plugins/camera/ngx';
+import { Clipboard } from '@awesome-cordova-plugins/clipboard/ngx';
+import { File } from '@awesome-cordova-plugins/file/ngx';
+import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
+import { FileTransfer } from '@awesome-cordova-plugins/file-transfer/ngx';
+import { Geolocation } from '@awesome-cordova-plugins/geolocation/ngx';
+import { InAppBrowser } from '@awesome-cordova-plugins/in-app-browser/ngx';
+import { LocalNotifications } from '@awesome-cordova-plugins/local-notifications/ngx';
+import { MediaCapture } from '@awesome-cordova-plugins/media-capture/ngx';
+import { Zip } from '@awesome-cordova-plugins/zip/ngx';
 
 // Mock services.
 import { CameraMock } from './services/camera';
@@ -54,62 +54,62 @@ import { CoreLocalNotifications } from '@services/local-notifications';
  */
 @NgModule({
     imports: [
-        CoreEmulatorComponentsModule,
+    CoreEmulatorComponentsModule,
     ],
     providers: [
-        {
-            provide: Camera,
-            useFactory: (): Camera => CorePlatform.is('cordova') ? new Camera() : new CameraMock(),
-        },
-        {
-            provide: Clipboard,
-            useFactory: (): Clipboard => CorePlatform.is('cordova') ? new Clipboard() : new ClipboardMock(),
-        },
-        {
-            provide: File,
-            useFactory: (): File => CorePlatform.is('cordova') ? new File() : new FileMock(),
-        },
-        {
-            provide: FileOpener,
-            useFactory: (): FileOpener => CorePlatform.is('cordova') ? new FileOpener() : new FileOpenerMock(),
-        },
-        {
-            provide: FileTransfer,
-            useFactory: (): FileTransfer => CorePlatform.is('cordova') ? new FileTransfer() : new FileTransferMock(),
-        },
-        {
-            provide: Geolocation,
-            useFactory: (): Geolocation => CorePlatform.is('cordova') ? new Geolocation() : new GeolocationMock(),
-        },
-        {
-            provide: InAppBrowser,
-            useFactory: (): InAppBrowser => CorePlatform.is('cordova') ? new InAppBrowser() : new InAppBrowserMock(),
-        },
-        {
-            provide: MediaCapture,
-            useFactory: (): MediaCapture => CorePlatform.is('cordova') ? new MediaCapture() : new MediaCaptureMock(),
-        },
-        {
-            provide: Zip,
-            useFactory: (): Zip => CorePlatform.is('cordova') ? new Zip() : new ZipMock(),
-        },
-        {
-            provide: LocalNotifications,
-            useFactory: (): LocalNotifications => CoreLocalNotifications.isPluginAvailable()
-                ? new LocalNotifications()
-                : new LocalNotificationsMock(),
-        },
-        {
-            provide: APP_INITIALIZER,
-            useFactory: () => () => {
-                if (CorePlatform.is('cordova')) {
-                    return;
-                }
+    {
+    provide: Camera,
+    useFactory: (): Camera => CorePlatform.is('cordova') ? new Camera() : new CameraMock(),
+    },
+    {
+    provide: Clipboard,
+    useFactory: (): Clipboard => CorePlatform.is('cordova') ? new Clipboard() : new ClipboardMock(),
+    },
+    {
+    provide: File,
+    useFactory: (): File => CorePlatform.is('cordova') ? new File() : new FileMock(),
+    },
+    {
+    provide: FileOpener,
+    useFactory: (): FileOpener => CorePlatform.is('cordova') ? new FileOpener() : new FileOpenerMock(),
+    },
+    {
+    provide: FileTransfer,
+    useFactory: (): FileTransfer => CorePlatform.is('cordova') ? new FileTransfer() : new FileTransferMock(),
+    },
+    {
+    provide: Geolocation,
+    useFactory: (): Geolocation => CorePlatform.is('cordova') ? new Geolocation() : new GeolocationMock(),
+    },
+    {
+    provide: InAppBrowser,
+    useFactory: (): InAppBrowser => CorePlatform.is('cordova') ? new InAppBrowser() : new InAppBrowserMock(),
+    },
+    {
+    provide: MediaCapture,
+    useFactory: (): MediaCapture => CorePlatform.is('cordova') ? new MediaCapture() : new MediaCaptureMock(),
+    },
+    {
+    provide: Zip,
+    useFactory: (): Zip => CorePlatform.is('cordova') ? new Zip() : new ZipMock(),
+    },
+    {
+    provide: LocalNotifications,
+    useFactory: (): LocalNotifications => CoreLocalNotifications.isPluginAvailable()
+    ? new LocalNotifications()
+    : new LocalNotificationsMock(),
+    },
+    {
+    provide: APP_INITIALIZER,
+    useFactory: () => () => {
+    if (CorePlatform.is('cordova')) {
+    return;
+    }
 
-                return CoreEmulatorHelper.load();
-            },
-            multi: true,
-        },
+    return CoreEmulatorHelper.load();
+    },
+    multi: true,
+    },
     ],
-})
+    })
 export class CoreEmulatorModule {}

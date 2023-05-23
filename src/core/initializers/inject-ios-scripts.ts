@@ -25,5 +25,5 @@ export default async function(): Promise<void> {
         return;
     }
 
-    CoreIframeUtils.injectiOSScripts(window);
+    CoreIframeUtils.injectiOSScripts(<any> window);
 }

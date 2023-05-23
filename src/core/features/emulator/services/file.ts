@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Injectable } from '@angular/core';
-import { File, Entry, DirectoryEntry, FileEntry, IWriteOptions, RemoveResult } from '@ionic-native/file/ngx';
+import { File, Entry, DirectoryEntry, FileEntry, IWriteOptions, RemoveResult, DirectoryReader } from '@awesome-cordova-plugins/file/ngx';
 import { CorePath } from '@singletons/path';
 
 /**
@@ -359,7 +359,7 @@ export class FileMock extends File {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (<any> navigator).webkitPersistentStorage.requestQuota(500 * 1024 * 1024, (granted) => {
                 window.requestFileSystem(LocalFileSystem.PERSISTENT, granted, (entry) => {
-                    resolve(entry.root.toURL());
+                    resolve((<DirectoryEntry> <unknown> entry.root).toURL());
                 }, reject);
             }, reject);
         });
@@ -642,8 +642,8 @@ export class FileMock extends File {
     resolveLocalFilesystemUrl(fileUrl: string): Promise<Entry> {
         return new Promise<Entry>((resolve, reject): void => {
             try {
-                window.resolveLocalFileSystemURL(fileUrl, (entry: Entry) => {
-                    resolve(entry);
+                window.resolveLocalFileSystemURL(fileUrl, (entry) => {
+                    resolve(entry as unknown as Entry);
                 }, (error: FileError) => {
                     this.fillErrorMessageMock(error);
                     reject(error);

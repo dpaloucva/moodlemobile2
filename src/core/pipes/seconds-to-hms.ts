@@ -25,7 +25,7 @@ import { CoreConstants } from '@/core/constants';
  */
 @Pipe({
     name: 'coreSecondsToHMS',
-})
+    })
 export class CoreSecondsToHMSPipe implements PipeTransform {
 
     protected logger: CoreLogger;
@@ -41,7 +41,7 @@ export class CoreSecondsToHMSPipe implements PipeTransform {
      * @returns Formatted seconds.
      */
     transform(seconds: string | number, showHours: boolean = true): string {
-        if (!seconds || seconds < 0) {
+        if (!seconds || Number(seconds) < 0) {
             seconds = 0;
         } else if (typeof seconds == 'string') {
             // Convert the value to a number.

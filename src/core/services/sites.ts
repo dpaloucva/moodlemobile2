@@ -62,6 +62,7 @@ import { asyncInstance, AsyncInstance } from '../utils/async-instance';
 import { CoreConfig } from './config';
 import { CoreNetwork } from '@services/network';
 import { CoreUserGuestSupportConfig } from '@features/user/classes/support/guest-support-config';
+import { firstValueFrom } from '../utils/rxjs';
 
 export const CORE_SITE_SCHEMAS = new InjectionToken<CoreSiteSchema[]>('CORE_SITE_SCHEMAS');
 export const CORE_SITE_CURRENT_SITE_ID_CONFIG = 'current_site_id';
@@ -418,8 +419,9 @@ export class CoreSitesProvider {
         siteUrl = CoreUrlUtils.removeUrlParams(siteUrl);
 
         try {
-            data = await Http.post(siteUrl + '/login/token.php', { appsitecheck: 1 }).pipe(timeout(CoreWS.getRequestTimeout()))
-                .toPromise();
+            data = await firstValueFrom(
+                Http.post(siteUrl + '/login/token.php', { appsitecheck: 1 }).pipe(timeout(CoreWS.getRequestTimeout())),
+            );
         } catch (error) {
             throw this.createCannotConnectLoginError(null, {
                 supportConfig: await CoreUserGuestSupportConfig.forSite(siteUrl),
@@ -489,7 +491,7 @@ export class CoreSitesProvider {
         let data: CoreSitesLoginTokenResponse;
 
         try {
-            data = await Http.post(loginUrl, params).pipe(timeout(CoreWS.getRequestTimeout())).toPromise();
+            data = await firstValueFrom(Http.post(loginUrl, params).pipe(timeout(CoreWS.getRequestTimeout())));
         } catch (error) {
             throw new CoreError(
                 this.isLoggedIn()

@@ -17,7 +17,6 @@ import { NgModule } from '@angular/core';
 import { AddonBadgesModule } from './badges/badges.module';
 import { AddonBlockModule } from './block/block.module';
 import { AddonBlogModule } from './blog/blog.module';
-import { AddonCalendarModule } from './calendar/calendar.module';
 import { AddonCompetencyModule } from './competency/competency.module';
 import { AddonCourseCompletionModule } from './coursecompletion/coursecompletion.module';
 import { AddonFilterModule } from './filter/filter.module';
@@ -36,25 +35,24 @@ import { AddonUserProfileFieldModule } from './userprofilefield/userprofilefield
 
 @NgModule({
     imports: [
-        AddonBadgesModule,
-        AddonBlockModule,
-        AddonBlogModule,
-        AddonCalendarModule,
-        AddonCompetencyModule,
-        AddonCourseCompletionModule,
-        AddonFilterModule,
-        AddonMessageOutputModule,
-        AddonMessagesModule,
-        AddonModModule,
-        AddonNotesModule,
-        AddonNotificationsModule,
-        AddonPrivateFilesModule,
-        AddonQbehaviourModule,
-        AddonQtypeModule,
-        AddonRemoteThemesModule,
-        AddonReportModule,
-        AddonStorageManagerModule,
-        AddonUserProfileFieldModule,
+    AddonBadgesModule,
+    AddonBlockModule,
+    AddonBlogModule,
+    AddonCompetencyModule,
+    AddonCourseCompletionModule,
+    AddonFilterModule,
+    AddonMessageOutputModule,
+    AddonMessagesModule,
+    AddonModModule,
+    AddonNotesModule,
+    AddonNotificationsModule,
+    AddonPrivateFilesModule,
+    AddonQbehaviourModule,
+    AddonQtypeModule,
+    AddonRemoteThemesModule,
+    AddonReportModule,
+    AddonStorageManagerModule,
+    AddonUserProfileFieldModule,
     ],
-})
+    })
 export class AddonsModule {}

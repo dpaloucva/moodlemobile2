@@ -20,8 +20,6 @@ import { AddonBlockBadgesModule } from './badges/badges.module';
 import { AddonBlockBlogMenuModule } from './blogmenu/blogmenu.module';
 import { AddonBlockBlogRecentModule } from './blogrecent/blogrecent.module';
 import { AddonBlockBlogTagsModule } from './blogtags/blogtags.module';
-import { AddonBlockCalendarMonthModule } from './calendarmonth/calendarmonth.module';
-import { AddonBlockCalendarUpcomingModule } from './calendarupcoming/calendarupcoming.module';
 import { AddonBlockCommentsModule } from './comments/comments.module';
 import { AddonBlockCompletionStatusModule } from './completionstatus/completionstatus.module';
 import { AddonBlockCourseListModule } from './courselist/courselist.module';
@@ -40,37 +38,33 @@ import { AddonBlockSelfCompletionModule } from './selfcompletion/selfcompletion.
 import { AddonBlockSiteMainMenuModule } from './sitemainmenu/sitemainmenu.module';
 import { AddonBlockStarredCoursesModule } from './starredcourses/starredcourses.module';
 import { AddonBlockTagsModule } from './tags/tags.module';
-import { AddonBlockTimelineModule } from './timeline/timeline.module';
 
 @NgModule({
     imports: [
-        AddonBlockActivityModulesModule,
-        AddonBlockActivityResultsModule,
-        AddonBlockBadgesModule,
-        AddonBlockBlogMenuModule,
-        AddonBlockBlogRecentModule,
-        AddonBlockBlogTagsModule,
-        AddonBlockCalendarMonthModule,
-        AddonBlockCalendarUpcomingModule,
-        AddonBlockCommentsModule,
-        AddonBlockCompletionStatusModule,
-        AddonBlockCourseListModule,
-        AddonBlockGlossaryRandomModule,
-        AddonBlockHtmlModule,
-        AddonBlockLearningPlansModule,
-        AddonBlockMyOverviewModule,
-        AddonBlockNewsItemsModule,
-        AddonBlockOnlineUsersModule,
-        AddonBlockPrivateFilesModule,
-        AddonBlockRecentActivityModule,
-        AddonBlockRecentlyAccessedCoursesModule,
-        AddonBlockRecentlyAccessedItemsModule,
-        AddonBlockRssClientModule,
-        AddonBlockSelfCompletionModule,
-        AddonBlockSiteMainMenuModule,
-        AddonBlockStarredCoursesModule,
-        AddonBlockTagsModule,
-        AddonBlockTimelineModule,
+    AddonBlockActivityModulesModule,
+    AddonBlockActivityResultsModule,
+    AddonBlockBadgesModule,
+    AddonBlockBlogMenuModule,
+    AddonBlockBlogRecentModule,
+    AddonBlockBlogTagsModule,
+    AddonBlockCommentsModule,
+    AddonBlockCompletionStatusModule,
+    AddonBlockCourseListModule,
+    AddonBlockGlossaryRandomModule,
+    AddonBlockHtmlModule,
+    AddonBlockLearningPlansModule,
+    AddonBlockMyOverviewModule,
+    AddonBlockNewsItemsModule,
+    AddonBlockOnlineUsersModule,
+    AddonBlockPrivateFilesModule,
+    AddonBlockRecentActivityModule,
+    AddonBlockRecentlyAccessedCoursesModule,
+    AddonBlockRecentlyAccessedItemsModule,
+    AddonBlockRssClientModule,
+    AddonBlockSelfCompletionModule,
+    AddonBlockSiteMainMenuModule,
+    AddonBlockStarredCoursesModule,
+    AddonBlockTagsModule,
     ],
-})
+    })
 export class AddonBlockModule {}

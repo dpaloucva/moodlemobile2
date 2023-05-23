@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { InAppBrowserObject, InAppBrowserOptions } from '@ionic-native/in-app-browser';
+import { InAppBrowserObject, InAppBrowserOptions } from '@awesome-cordova-plugins/in-app-browser';
 import { Md5 } from 'ts-md5/dist/md5';
 
 import { CoreApp } from '@services/app';
@@ -2123,7 +2123,7 @@ export class CoreSite {
                 CoreConstants.SECONDS_MINUTE * 6,
             );
 
-            if (CoreTimeUtils.timestamp() - this.lastAutoLogin < timeBetweenRequests) {
+            if (CoreTimeUtils.timestamp() - this.lastAutoLogin < Number(timeBetweenRequests)) {
                 // Not enough time has passed since last auto login.
                 return url;
             }

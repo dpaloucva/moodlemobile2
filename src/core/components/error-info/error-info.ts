@@ -15,8 +15,8 @@
 import { Component, ElementRef, Input, OnChanges, OnInit } from '@angular/core';
 import { Translate } from '@singletons';
 import { CoreForms } from '@singletons/form';
-import ChevronUpSVG from '!raw-loader!ionicons/dist/svg/chevron-up.svg';
-import ChevronDownSVG from '!raw-loader!ionicons/dist/svg/chevron-down.svg';
+// import ChevronUpSVG from '!raw-loader!ionicons/dist/svg/chevron-up.svg';
+// import ChevronDownSVG from '!raw-loader!ionicons/dist/svg/chevron-down.svg';
 
 /**
  * Component to show error details.
@@ -28,7 +28,7 @@ import ChevronDownSVG from '!raw-loader!ionicons/dist/svg/chevron-down.svg';
     selector: 'core-error-info',
     templateUrl: 'core-error-info.html',
     styleUrls: ['error-info.scss'],
-})
+    })
 export class CoreErrorInfoComponent implements OnInit, OnChanges {
 
     /**
@@ -54,11 +54,9 @@ export class CoreErrorInfoComponent implements OnInit, OnChanges {
                 <label for="${toggleId}" class="core-error-info--toggle" aria-hidden="true">
                     <span class="core-error-info--hide-content">
                         ${hideDetailsLabel}
-                        ${ChevronUpSVG}
                     </span>
                     <span class="core-error-info--show-content">
                         ${showDetailsLabel}
-                        ${ChevronDownSVG}
                     </span>
                 </label>
             </div>

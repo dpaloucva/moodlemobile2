@@ -87,7 +87,7 @@ export class CoreObject {
                 newObject[key] = obj[key];
             }
         } else {
-            const originalKeys = Object.keys(obj);
+            const originalKeys = Object.keys(<any> obj);
 
             for (const key of originalKeys) {
                 if (key.match(keysOrRegex)) {
@@ -125,7 +125,7 @@ export class CoreObject {
     static withoutEmpty<T>(obj: T): CoreObjectWithoutEmpty<T> {
         const cleanObj = {};
 
-        for (const [key, value] of Object.entries(obj)) {
+        for (const [key, value] of Object.entries(<any> obj)) {
             if (value === null || value === undefined) {
                 continue;
             }
@@ -145,7 +145,7 @@ export class CoreObject {
     static withoutUndefined<T>(obj: T): CoreObjectWithoutUndefined<T> {
         const cleanObj = {};
 
-        for (const [key, value] of Object.entries(obj)) {
+        for (const [key, value] of Object.entries(<any> obj)) {
             if (value === undefined) {
                 continue;
             }

@@ -2042,7 +2042,7 @@ export class CoreCourseHelperProvider {
      *
      * @returns Course summary page module.
      */
-    async getCourseSummaryRouteModule(): Promise<unknown> {
+    async getCourseSummaryRouteModule(): Promise<any> {
         return import('../course-summary-lazy.module').then(m => m.CoreCourseSummaryLazyModule);
     }
 

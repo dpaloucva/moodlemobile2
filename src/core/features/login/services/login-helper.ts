@@ -1500,7 +1500,7 @@ export class CoreLoginHelperProvider {
      *
      * @returns Credentials page route module.
      */
-    async getCredentialsRouteModule(): Promise<unknown> {
+    async getCredentialsRouteModule(): Promise<any> {
         return import('@features/login/login-credentials-lazy.module').then(m => m.CoreLoginCredentialsLazyModule);
     }
 

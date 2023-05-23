@@ -14,10 +14,10 @@
 
 import { Injectable } from '@angular/core';
 import { ActionSheetButton } from '@ionic/core';
-import { CameraOptions } from '@ionic-native/camera/ngx';
-import { ChooserResult } from '@ionic-native/chooser/ngx';
-import { FileEntry, IFile } from '@ionic-native/file/ngx';
-import { MediaFile } from '@ionic-native/media-capture/ngx';
+import { CameraOptions } from '@awesome-cordova-plugins/camera/ngx';
+import { ChooserResult } from '@awesome-cordova-plugins/chooser/ngx';
+import { FileEntry, IFile } from '@awesome-cordova-plugins/file/ngx';
+import { MediaFile } from '@awesome-cordova-plugins/media-capture/ngx';
 
 import { CoreNetwork } from '@services/network';
 import { CoreFile, CoreFileProvider, CoreFileProgressEvent } from '@services/file';
@@ -75,7 +75,7 @@ export class CoreFileUploaderHelperProvider {
 
         const modal = await CoreDomUtils.showModalLoading();
 
-        const result = await Chooser.getFileMetadata(mimetypes ? mimetypes.join(',') : undefined);
+        const result = await Chooser.getFile({ mimeTypes: mimetypes ? mimetypes.join(',') : undefined });
 
         modal.dismiss();
 
@@ -90,18 +90,18 @@ export class CoreFileUploaderHelperProvider {
         }
 
         // Verify that the mimetype is supported.
-        const error = CoreFileUploader.isInvalidMimetype(mimetypes, result.name, result.mediaType);
+        const error = CoreFileUploader.isInvalidMimetype(mimetypes, result.name, result.mimeType);
 
         if (error) {
             throw new CoreError(error);
         }
 
-        const options = CoreFileUploader.getFileUploadOptions(result.uri, result.name, result.mediaType, true);
+        const options = CoreFileUploader.getFileUploadOptions(result.path, result.name, result.mimeType, true);
 
         if (upload) {
-            return this.uploadFile(result.uri, maxSize || -1, true, options);
+            return this.uploadFile(result.path, maxSize || -1, true, options);
         } else {
-            return this.copyToTmpFolder(result.uri, false, maxSize, undefined, options);
+            return this.copyToTmpFolder(result.path, false, maxSize, undefined, options);
         }
     }
 
@@ -280,7 +280,7 @@ export class CoreFileUploaderHelperProvider {
      * @returns File name, undefined if cannot get it.
      */
     protected getChosenFileNameFromPath(result: ChooserResult): string | undefined {
-        const nameAndDir = CoreFile.getFileAndDirectoryFromPath(result.uri);
+        const nameAndDir = CoreFile.getFileAndDirectoryFromPath(result.path);
 
         if (!nameAndDir.name) {
             return;
@@ -290,7 +290,7 @@ export class CoreFileUploaderHelperProvider {
 
         if (!extension) {
             // The URI doesn't have an extension, add it now.
-            extension = CoreMimetypeUtils.getExtension(result.mediaType);
+            extension = CoreMimetypeUtils.getExtension(result.mimeType);
 
             if (extension) {
                 nameAndDir.name += '.' + extension;

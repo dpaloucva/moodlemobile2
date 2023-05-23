@@ -1,6 +1,6 @@
 /** Format Text - Show more styles. */
 /** Styles of elements inside the directive should be placed in format-text.scss */
-@import "~theme/globals";
+@import "../globals";
 
 core-format-text {
     --core-format-text-background: var(--background, var(--ion-item-background));

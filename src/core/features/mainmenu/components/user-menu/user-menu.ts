@@ -40,7 +40,7 @@ import { Subscription } from 'rxjs';
     selector: 'core-main-menu-user-menu',
     templateUrl: 'user-menu.html',
     styleUrls: ['user-menu.scss'],
-})
+    })
 export class CoreMainMenuUserMenuComponent implements OnInit, OnDestroy {
 
     siteId?: string;
@@ -243,7 +243,7 @@ export class CoreMainMenuUserMenuComponent implements OnInit, OnDestroy {
             cssClass: 'core-modal-lateral core-modal-lateral-sm',
         });
 
-        if (closeAll) {
+        if (closeAll && thisModal) {
             await ModalController.dismiss(undefined, undefined, thisModal.id);
         }
     }

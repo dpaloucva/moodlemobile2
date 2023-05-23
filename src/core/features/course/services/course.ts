@@ -270,7 +270,7 @@ export class CoreCourseProvider {
             'value',
         );
 
-        return formatOptions.indentation === '1';
+        return formatOptions.indentation && Number(formatOptions.indentation) === 1;
     }
 
     /**

@@ -1,4 +1,4 @@
-@import "~theme/globals";
+@import "../../../../../theme/globals";
 
 :host {
     @for $i from 0 to length($core-course-image-background) {

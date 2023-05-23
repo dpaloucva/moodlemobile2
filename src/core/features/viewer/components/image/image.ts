@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
-import { IonSlides } from '@ionic/angular';
 import { ModalController, Translate } from '@singletons';
 import { CoreMath } from '@singletons/math';
 
@@ -24,10 +23,11 @@ import { CoreMath } from '@singletons/math';
     selector: 'core-viewer-image',
     templateUrl: 'image.html',
     styleUrls: ['image.scss'],
-})
+    })
 export class CoreViewerImageComponent implements OnInit, AfterViewInit {
 
-    @ViewChild(IonSlides) protected slides?: IonSlides;
+    // @ViewChild(IonSlides) protected slides?: IonSlides;
+    protected slides?: any = null;
 
     @Input() title = ''; // Modal title.
     @Input() image = ''; // Image URL.

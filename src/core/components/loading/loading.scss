@@ -1,4 +1,4 @@
-@import "~theme/globals";
+@import "../../../theme/globals";
 
 @mixin inline() {
     &:not(.core-loading-loaded) {
@@ -87,8 +87,8 @@
     @include inline();
 }
 
-:host-context(.limited-width > ):not([slot]),
-:host-context(.menu > ):not([slot]) {
+:host-context(.limited-width > *):not([slot]),
+:host-context(.menu > *):not([slot]) {
     &.core-loading-loaded {
         --contents-display: flex;
         flex-direction: column;

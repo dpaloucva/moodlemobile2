@@ -23,7 +23,9 @@ export abstract class CorePromise<T = unknown> implements Promise<T> {
         this.nativePromise = nativePromise;
     }
 
-    [Symbol.toStringTag]: string;
+    get [Symbol.toStringTag](): string {
+        return 'CorePromise';
+    }
 
     /**
      * @inheritdoc

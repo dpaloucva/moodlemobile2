@@ -25,7 +25,7 @@ import {
     SimpleChange,
     ElementRef,
 } from '@angular/core';
-import { IonSlides } from '@ionic/angular';
+// import { IonSlides } from '@ionic/angular';
 import { BackButtonEvent } from '@ionic/core';
 import { Subscription } from 'rxjs';
 
@@ -46,7 +46,7 @@ import { CorePlatform } from '@services/platform';
  */
 @Component({
     template: '',
-})
+    })
 export class CoreTabsBaseComponent<T extends CoreTabBase> implements OnInit, AfterViewInit, OnChanges, OnDestroy, AsyncDirective {
 
     // Minimum tab's width.
@@ -56,7 +56,8 @@ export class CoreTabsBaseComponent<T extends CoreTabBase> implements OnInit, Aft
     @Input() hideUntil = false; // Determine when should the contents be shown.
     @Output() protected ionChange = new EventEmitter<T>(); // Emitted when the tab changes.
 
-    @ViewChild(IonSlides) protected slides?: IonSlides;
+    // @ViewChild(IonSlides) protected slides?: IonSlides;
+    protected slides: any = null;
 
     tabs: T[] = []; // List of tabs.
 
@@ -75,7 +76,7 @@ export class CoreTabsBaseComponent<T extends CoreTabBase> implements OnInit, Aft
         threshold: 10,
     };
 
-    protected slidesElement?: HTMLIonSlidesElement;
+    protected slidesElement?: any = null;
     protected initialized = false;
 
     protected resizeListener?: CoreEventObserver;
@@ -228,9 +229,9 @@ export class CoreTabsBaseComponent<T extends CoreTabBase> implements OnInit, Aft
      * @returns Selected tab.
      */
     getSelected(): T | undefined {
-        const index = this.selected && this.getTabIndex(this.selected);
+        const index = !!this.selected && this.getTabIndex(this.selected);
 
-        return index !== undefined && index >= 0 ? this.tabs[index] : undefined;
+        return index !== false && index >= 0 ? this.tabs[index] : undefined;
     }
 
     /**
@@ -273,7 +274,7 @@ export class CoreTabsBaseComponent<T extends CoreTabBase> implements OnInit, Aft
             throw new CoreError('Swiper not found, will try on next change.');
         }
 
-        this.slidesElement = <HTMLIonSlidesElement>slidesSwiper.el;
+        this.slidesElement = slidesSwiper.el;
         await this.slidesElement.componentOnReady();
 
         this.initialized = true;

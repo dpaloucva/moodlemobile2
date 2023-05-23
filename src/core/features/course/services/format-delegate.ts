@@ -282,7 +282,7 @@ export class CoreCourseFormatDelegateService extends CoreDelegate<CoreCourseForm
      * @param sections List of sections.
      * @returns Promise.
      */
-    async getCurrentSection<T = CoreCourseSection>(
+    async getCurrentSection<T extends Record<string, unknown> = CoreCourseSection>(
         course: CoreCourseAnyCourseData,
         sections: T[],
     ): Promise<CoreCourseFormatCurrentSectionData<T>> {
@@ -294,7 +294,7 @@ export class CoreCourseFormatDelegateService extends CoreDelegate<CoreCourseForm
             );
 
             if (sectionData && 'forceSelected' in sectionData) {
-                return sectionData;
+                return <any> sectionData;
             } else if (sectionData) {
                 // Function just returned the section, don't force selecting it.
                 return {

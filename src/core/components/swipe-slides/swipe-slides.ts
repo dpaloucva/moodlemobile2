@@ -16,7 +16,7 @@ import {
     Component, ContentChild, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, TemplateRef, ViewChild,
 } from '@angular/core';
 import { CoreSwipeSlidesItemsManager } from '@classes/items-management/swipe-slides-items-manager';
-import { IonContent, IonSlides } from '@ionic/angular';
+import { IonContent } from '@ionic/angular';
 import { CoreDomUtils, VerticalPoint } from '@services/utils/dom';
 import { CoreUtils } from '@services/utils/utils';
 import { CoreDom } from '@singletons/dom';
@@ -30,7 +30,7 @@ import { CoreMath } from '@singletons/math';
     selector: 'core-swipe-slides',
     templateUrl: 'swipe-slides.html',
     styleUrls: ['swipe-slides.scss'],
-})
+    })
 export class CoreSwipeSlidesComponent<Item = unknown> implements OnChanges, OnDestroy {
 
     @Input() manager?: CoreSwipeSlidesItemsManager<Item>;
@@ -38,7 +38,8 @@ export class CoreSwipeSlidesComponent<Item = unknown> implements OnChanges, OnDe
     @Output() onWillChange = new EventEmitter<CoreSwipeCurrentItemData<Item>>();
     @Output() onDidChange = new EventEmitter<CoreSwipeCurrentItemData<Item>>();
 
-    @ViewChild(IonSlides) slides?: IonSlides;
+    // @ViewChild(IonSlides) slides?: IonSlides;
+    slides: any = null;
     @ContentChild(TemplateRef) template?: TemplateRef<unknown>; // Template defined by the content.
 
     protected hostElement: HTMLElement;

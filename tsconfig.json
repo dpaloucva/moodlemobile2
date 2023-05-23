@@ -9,7 +9,7 @@
     "experimentalDecorators": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
-    "module": "esnext",
+    "module": "es2020",
     "moduleResolution": "node",
     "importHelpers": true,
     "target": "es2015",
@@ -41,11 +41,14 @@
       "@services/*": ["core/services/*"],
       "@singletons": ["core/singletons/index"],
       "@singletons/*": ["core/singletons/*"],
-      "@/*": ["*"]
-    }
+      "@/*": ["./*"]
+    },
+    "useDefineForClassFields": false,
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,
-    "strictInjectionParameters": true
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true
   }
 }

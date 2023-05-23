@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { Injectable } from '@angular/core';
-import { InAppBrowserObject, InAppBrowserOptions } from '@ionic-native/in-app-browser';
-import { FileEntry } from '@ionic-native/file/ngx';
+import { InAppBrowserObject, InAppBrowserOptions } from '@awesome-cordova-plugins/in-app-browser';
+import { FileEntry } from '@awesome-cordova-plugins/file/ngx';
 import { Subscription } from 'rxjs';
 
 import { CoreEvents } from '@singletons/events';
@@ -25,7 +25,7 @@ import { CoreDomUtils } from '@services/utils/dom';
 import { CoreMimetypeUtils } from '@services/utils/mimetype';
 import { CoreTextUtils } from '@services/utils/text';
 import { CoreWSError } from '@classes/errors/wserror';
-import { makeSingleton, Clipboard, InAppBrowser, FileOpener, WebIntent, QRScanner, Translate, NgZone } from '@singletons';
+import { makeSingleton, Clipboard, InAppBrowser, FileOpener, WebIntent, Translate, NgZone } from '@singletons';
 import { CoreLogger } from '@singletons/logger';
 import { CoreViewerQRScannerComponent } from '@features/viewer/components/qr-scanner/qr-scanner';
 import { CoreCanceledError } from '@classes/errors/cancelederror';
@@ -1380,7 +1380,7 @@ export class CoreUtilsProvider {
      * @returns Keys of the enumeration.
      */
     enumKeys<O, K extends keyof O = keyof O>(enumeration: O): K[] {
-        return Object.keys(enumeration).filter(k => Number.isNaN(+k)) as K[];
+        return Object.keys(<any> enumeration).filter(k => Number.isNaN(+k)) as K[];
     }
 
     /**
@@ -1681,45 +1681,45 @@ export class CoreUtilsProvider {
         // Ask the user for permission to use the camera.
         // The scan method also does this, but since it returns an Observable we wouldn't be able to detect if the user denied.
         try {
-            const status = await QRScanner.prepare();
+            // const status = await QRScanner.prepare();
 
-            if (!status.authorized) {
-                // No access to the camera, reject. In android this shouldn't happen, denying access passes through catch.
-                throw new Error('The user denied camera access.');
-            }
+            // if (!status.authorized) {
+            //     // No access to the camera, reject. In android this shouldn't happen, denying access passes through catch.
+            //     throw new Error('The user denied camera access.');
+            // }
 
-            if (this.qrScanData && this.qrScanData.deferred) {
-                // Already scanning.
-                return this.qrScanData.deferred;
-            }
+            // if (this.qrScanData && this.qrScanData.deferred) {
+            //     // Already scanning.
+            //     return this.qrScanData.deferred;
+            // }
 
-            // Start scanning.
-            this.qrScanData = {
-                deferred: new CorePromisedValue(),
+            // // Start scanning.
+            // this.qrScanData = {
+            //     deferred: new CorePromisedValue(),
 
-                // When text is received, stop scanning and return the text.
-                observable: QRScanner.scan().subscribe(text => this.stopScanQR(text, false)),
-            };
+            //     // When text is received, stop scanning and return the text.
+            //     observable: QRScanner.scan().subscribe(text => this.stopScanQR(text, false)),
+            // };
 
-            // Show the camera.
-            try {
-                await QRScanner.show();
+            // // Show the camera.
+            // try {
+            //     await QRScanner.show();
 
-                document.body.classList.add('core-scanning-qr');
+            //     document.body.classList.add('core-scanning-qr');
 
-                // Set color-scheme to 'normal', otherwise the camera isn't seen in Android.
-                const colorSchemeMeta = document.querySelector('meta[name="color-scheme"]');
-                if (colorSchemeMeta) {
-                    this.initialColorSchemeContent = colorSchemeMeta.getAttribute('content') || this.initialColorSchemeContent;
-                    colorSchemeMeta.setAttribute('content', 'normal');
-                }
+            //     // Set color-scheme to 'normal', otherwise the camera isn't seen in Android.
+            //     const colorSchemeMeta = document.querySelector('meta[name="color-scheme"]');
+            //     if (colorSchemeMeta) {
+            //         this.initialColorSchemeContent = colorSchemeMeta.getAttribute('content') || this.initialColorSchemeContent;
+            //         colorSchemeMeta.setAttribute('content', 'normal');
+            //     }
 
-                return this.qrScanData.deferred;
-            } catch (e) {
-                this.stopScanQR(e, true);
+            //     return this.qrScanData.deferred;
+            // } catch (e) {
+            //     this.stopScanQR(e, true);
 
-                throw e;
-            }
+            //     throw e;
+            // }
         } catch (error) {
             // eslint-disable-next-line @typescript-eslint/naming-convention
             error.message = error.message || (error as { _message?: string })._message;
@@ -1746,8 +1746,8 @@ export class CoreUtilsProvider {
         // Set color-scheme to the initial value.
         document.querySelector('meta[name="color-scheme"]')?.setAttribute('content', this.initialColorSchemeContent);
 
-        QRScanner.hide();
-        QRScanner.destroy();
+        // QRScanner.hide();
+        // QRScanner.destroy();
 
         this.qrScanData.observable.unsubscribe(); // Stop scanning.
 

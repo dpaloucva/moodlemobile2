@@ -20,8 +20,7 @@
             </core-format-text>
         </span>
     </ion-label>
-    <ion-datetime [formControlName]="modelName" [placeholder]="'core.choosedots' | translate" [displayFormat]="format" [max]="max"
-        [min]="min" [monthNames]="monthNames" [displayTimezone]="displayTimezone">
+    <ion-datetime [formControlName]="modelName" [max]="max" [min]="min">
     </ion-datetime>
     <core-input-errors [control]="form.controls[modelName]"></core-input-errors>
 </ion-item>

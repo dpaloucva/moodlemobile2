@@ -125,7 +125,7 @@ export class CoreDatabaseTable<
         }
 
         const sorting = options?.sorting
-            && this.normalizedSorting(options.sorting).map(([column, direction]) => `${column} ${direction}`).join(', ');
+            && this.normalizedSorting(options.sorting).map(([column, direction]) => `${String(column)} ${direction}`).join(', ');
 
         return this.database.getRecords(this.tableName, conditions, sorting, '*', options?.offset, options?.limit);
     }
@@ -350,6 +350,10 @@ export class CoreDatabaseTable<
             for (const [column, direction] of columnsSorting) {
                 const aValue = a[column];
                 const bValue = b[column];
+
+                if (aValue === undefined || aValue === null || bValue === null || bValue === undefined) {
+                    return -1;
+                }
 
                 if (aValue > bValue) {
                     return direction === 'desc' ? -1 : 1;

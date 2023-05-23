@@ -21,8 +21,7 @@
         [attr.aria-label]="'core.previous' | translate" [tabindex]="toolbarPrevHidden ? -1 : 0">
         <ion-icon name="fas-chevron-left" aria-hidden="true"></ion-icon>
     </button>
-    <ion-slides [options]="slidesOpts" [dir]="direction" (ionSlideDidChange)="updateToolbarArrows()">
-        <!-- https://developer.mozilla.org/en-US/docs/Web/API/Document/execCommand -->
+    <!-- <ion-slides [options]="slidesOpts" [dir]="direction" (ionSlideDidChange)="updateToolbarArrows()">
         <ion-slide>
             <button [disabled]="!rteEnabled" [attr.aria-pressed]="toolbarStyles.strong" [title]="'core.editor.bold' | translate"
                 (click)="buttonAction($event, 'bold', 'strong')" (keyup)="buttonAction($event, 'bold', 'strong')"
@@ -117,7 +116,7 @@
                 <ion-icon name="fas-xmark" aria-hidden="true"></ion-icon>
             </button>
         </ion-slide>
-    </ion-slides>
+    </ion-slides> -->
     <button *ngIf="toolbarArrows" class="toolbar-arrow" [attr.disabled]="toolbarNextHidden ? 'true' : null"
         [attr.aria-label]="'core.next' | translate" (click)="toolbarNext($event)" (keyup)="toolbarNext($event)"
         (mousedown)="downAction($event)" (keydown)="downAction($event)" [tabindex]="toolbarNextHidden ? -1 : 0">

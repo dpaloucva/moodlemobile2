@@ -357,7 +357,7 @@ export class AddonModScormProvider {
                     element = '!';
                 } else if (reOther.test(element)) {
                     // Other symbols = | <> .
-                    matches = element.match(reOther) ?? [];
+                    matches = element.match(reOther) ?? [''];
                     element = matches[1]?.trim();
 
                     if (trackData[element] !== undefined) {

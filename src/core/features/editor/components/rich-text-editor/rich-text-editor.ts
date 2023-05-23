@@ -25,7 +25,7 @@ import {
     AfterViewInit,
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { IonTextarea, IonContent, IonSlides } from '@ionic/angular';
+import { IonTextarea, IonContent } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 
 import { CoreSites } from '@services/sites';
@@ -55,7 +55,7 @@ import { CorePlatform } from '@services/platform';
     selector: 'core-rich-text-editor',
     templateUrl: 'core-editor-rich-text-editor.html',
     styleUrls: ['rich-text-editor.scss'],
-})
+    })
 export class CoreEditorRichTextEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Based on: https://github.com/judgewest2000/Ionic3RichText/
@@ -78,7 +78,8 @@ export class CoreEditorRichTextEditorComponent implements OnInit, AfterViewInit,
     @ViewChild('editor') editor?: ElementRef; // WYSIWYG editor.
     @ViewChild('textarea') textarea?: IonTextarea; // Textarea editor.
     @ViewChild('toolbar') toolbar?: ElementRef;
-    @ViewChild(IonSlides) toolbarSlides?: IonSlides;
+    // @ViewChild(IonSlides) toolbarSlides?: IonSlides;
+    toolbarSlides?: any = null;
 
     protected readonly DRAFT_AUTOSAVE_FREQUENCY = 30000;
     protected readonly RESTORE_MESSAGE_CLEAR_TIME = 6000;

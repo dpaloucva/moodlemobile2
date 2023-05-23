@@ -43,7 +43,7 @@ import { CoreTime } from '@singletons/time';
     selector: 'page-addon-mod-lesson-user-retake',
     templateUrl: 'user-retake.html',
     styleUrls: ['user-retake.scss'],
-})
+    })
 export class AddonModLessonUserRetakePage implements OnInit {
 
     component = AddonModLessonProvider.COMPONENT;
@@ -219,7 +219,7 @@ export class AddonModLessonUserRetakePage implements OnInit {
 
         // Format pages data.
         formattedData.answerpages.forEach((page) => {
-            if (AddonModLesson.answerPageIsContent(page)) {
+            if (AddonModLesson.answerPageIsContent(<any> page)) {
                 page.isContent = true;
 
                 if (page.answerdata?.answers) {
@@ -228,7 +228,7 @@ export class AddonModLessonUserRetakePage implements OnInit {
                         answer[0] = AddonModLessonHelper.getContentPageAnswerDataFromHtml(answer[0]);
                     });
                 }
-            } else if (AddonModLesson.answerPageIsQuestion(page)) {
+            } else if (AddonModLesson.answerPageIsQuestion(<any> page)) {
                 page.isQuestion = true;
 
                 if (page.answerdata?.answers) {

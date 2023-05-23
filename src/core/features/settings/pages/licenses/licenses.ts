@@ -16,6 +16,7 @@ import { Component, OnInit } from '@angular/core';
 import { CoreConstants } from '@/core/constants';
 import { Http } from '@singletons';
 import { IonSearchbar } from '@ionic/angular';
+import { firstValueFrom } from '@/core/utils/rxjs';
 
 /**
  * Defines license info
@@ -38,7 +39,7 @@ interface CoreSettingsLicense {
 @Component({
     selector: 'page-core-app-settings-licenses',
     templateUrl: 'licenses.html',
-})
+    })
 export class CoreSettingsLicensesPage implements OnInit {
 
     licensesUrl: string;
@@ -63,7 +64,7 @@ export class CoreSettingsLicensesPage implements OnInit {
      */
     async ngOnInit(): Promise<void> {
         try {
-            const licenses = await Http.get(this.licensesUrl).toPromise();
+            const licenses = await firstValueFrom(Http.get(this.licensesUrl));
             this.allLicenses = Object.keys(licenses).map((name) => {
                 const license = licenses[name];
 
