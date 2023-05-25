@@ -23,17 +23,23 @@ const MAIN_MENU_TAB_ROUTES = new InjectionToken('MAIN_MENU_TAB_ROUTES');
  * Build module routes.
  *
  * @param injector Injector.
+ * @param mainMenuRoute The main menu route of the tab creating the routes. Used to avoid infinite loops.
+ * @param tabMainRoute The main route inside each tab.
  * @returns Routes.
  */
-export function buildTabMainRoutes(injector: Injector, mainRoute: Route): Routes {
+export function buildTabMainRoutes(injector: Injector, mainMenuRoute: Route, tabMainRoute: Route): Routes {
+    console.error('buildTabMainRoutes', mainMenuRoute.path);
     const routes = resolveModuleRoutes(injector, MAIN_MENU_TAB_ROUTES);
 
-    mainRoute.path = mainRoute.path || '';
-    mainRoute.children = mainRoute.children || [];
-    mainRoute.children = mainRoute.children.concat(routes.children);
+    routes.children = routes.children.filter(route => route !== mainMenuRoute);
+    routes.siblings = routes.siblings.filter(route => route !== mainMenuRoute);
+
+    tabMainRoute.path = tabMainRoute.path || '';
+    tabMainRoute.children = tabMainRoute.children || [];
+    tabMainRoute.children = tabMainRoute.children.concat(routes.children);
 
     return [
-        mainRoute,
+        tabMainRoute,
         ...routes.siblings,
     ];
 }

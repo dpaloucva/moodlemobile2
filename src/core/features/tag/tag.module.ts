@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { APP_INITIALIZER, NgModule, Type } from '@angular/core';
-import { Routes } from '@angular/router';
+import { Route, Routes } from '@angular/router';
 import { CoreMainMenuDelegate } from '@features/mainmenu/services/mainmenu-delegate';
 import { CoreMainMenuRoutingModule } from '../mainmenu/mainmenu-routing.module';
 import { CoreContentLinksDelegate } from '@features/contentlinks/services/contentlinks-delegate';
@@ -32,12 +32,12 @@ export const CORE_TAG_SERVICES: Type<unknown>[] = [
     CoreTagProvider,
 ];
 
-const routes: Routes = [
-    {
-        path: CoreTagMainMenuHandlerService.PAGE_NAME,
-        loadChildren: () => import('./tag-lazy.module').then(m => m.CoreTagLazyModule),
-    },
-];
+export const TAG_MAIN_MENU_ROUTE: Route = {
+    path: CoreTagMainMenuHandlerService.PAGE_NAME,
+    loadChildren: () => import('./tag-lazy.module').then(m => m.CoreTagLazyModule),
+};
+
+const routes: Routes = [TAG_MAIN_MENU_ROUTE];
 
 @NgModule({
     imports: [

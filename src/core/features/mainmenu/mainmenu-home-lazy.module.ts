@@ -22,6 +22,7 @@ import { CoreMainMenuHomeHandlerService } from '@features/mainmenu/services/hand
 import { CoreMainMenuComponentsModule } from '@features/mainmenu/components/components.module';
 import { resolveHomeRoutes } from '@features/mainmenu/mainmenu-home-routing.module';
 import { CoreMainMenuHomePage } from '@features/mainmenu/pages/home/home';
+import { HOME_MAIN_MENU_ROUTE } from './mainmenu-lazy.module';
 
 /**
  * Build module routes.
@@ -33,7 +34,7 @@ function buildRoutes(injector: Injector): Routes {
     const routes = resolveHomeRoutes(injector);
 
     return [
-        ...buildTabMainRoutes(injector, {
+        ...buildTabMainRoutes(injector, HOME_MAIN_MENU_ROUTE, {
             path: '',
             data: {
                 mainMenuTabRoot: CoreMainMenuHomeHandlerService.PAGE_NAME,
@@ -51,7 +52,7 @@ function buildRoutes(injector: Injector): Routes {
         CoreMainMenuComponentsModule,
     ],
     providers: [
-        { provide: ROUTES, multi: true, useFactory: buildRoutes, deps: [Injector] },
+        // { provide: ROUTES, multi: true, useFactory: buildRoutes, deps: [Injector] },
     ],
     declarations: [
         CoreMainMenuHomePage,

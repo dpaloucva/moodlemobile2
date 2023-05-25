@@ -23,6 +23,7 @@ import { buildTabMainRoutes } from '@features/mainmenu/mainmenu-tab-routing.modu
 import { CoreSearchComponentsModule } from '@features/search/components/components.module';
 import { CoreCoursesHelper } from './services/courses-helper';
 import { CoreCoursesMyCoursesMainMenuHandlerService } from './services/handlers/my-courses-mainmenu';
+import { COURSES_MAIN_MENU_ROUTE } from './courses.module';
 
 /**
  * Build module routes.
@@ -52,7 +53,7 @@ function buildRoutes(injector: Injector): Routes {
             path: 'list',
             component: CoreCoursesListPage,
         },
-        ...buildTabMainRoutes(injector, {
+        ...buildTabMainRoutes(injector, COURSES_MAIN_MENU_ROUTE, {
             redirectTo: 'my',
             pathMatch: 'full',
         }),
@@ -72,12 +73,12 @@ function buildRoutes(injector: Injector): Routes {
     ],
     exports: [RouterModule],
     providers: [
-        {
-            provide: ROUTES,
-            multi: true,
-            deps: [Injector],
-            useFactory: buildRoutes,
-        },
+        // {
+        //     provide: ROUTES,
+        //     multi: true,
+        //     deps: [Injector],
+        //     useFactory: buildRoutes,
+        // },
     ],
 })
 export class CoreCoursesLazyModule {}

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { APP_INITIALIZER, NgModule, Type } from '@angular/core';
-import { Routes } from '@angular/router';
+import { Route, Routes } from '@angular/router';
 import { CoreContentLinksDelegate } from '@features/contentlinks/services/contentlinks-delegate';
 import { CoreCourseHelper } from '@features/course/services/course-helper';
 import { CoreMainMenuRoutingModule } from '@features/mainmenu/mainmenu-routing.module';
@@ -47,6 +47,11 @@ export const CORE_COURSES_SERVICES: Type<unknown>[] = [
     CoreCoursesHelperProvider,
 ];
 
+export const COURSES_MAIN_MENU_ROUTE: Route = {
+    path: CoreCoursesMyCoursesMainMenuHandlerService.PAGE_NAME,
+    loadChildren: () => import('./courses-lazy.module').then(m => m.CoreCoursesLazyModule),
+};
+
 const mainMenuHomeChildrenRoutes: Routes = [
     {
         path: CoreDashboardHomeHandlerService.PAGE_NAME,
@@ -54,12 +59,7 @@ const mainMenuHomeChildrenRoutes: Routes = [
     },
 ];
 
-const routes: Routes = [
-    {
-        path: CoreCoursesMyCoursesMainMenuHandlerService.PAGE_NAME,
-        loadChildren: () => import('./courses-lazy.module').then(m => m.CoreCoursesLazyModule),
-    },
-];
+const routes: Routes = [COURSES_MAIN_MENU_ROUTE];
 
 @NgModule({
     imports: [

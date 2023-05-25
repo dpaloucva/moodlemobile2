@@ -18,6 +18,7 @@ import { Injector, NgModule } from '@angular/core';
 import { RouterModule, ROUTES, Routes } from '@angular/router';
 
 import { buildTabMainRoutes } from '@features/mainmenu/mainmenu-tab-routing.module';
+import { PRIVATEFILES_MAIN_MENU_ROUTE } from './privatefiles.module';
 
 /**
  * Build module routes.
@@ -35,7 +36,7 @@ function buildRoutes(injector: Injector): Routes {
             path: ':hash',
             component: AddonPrivateFilesIndexPage,
         },
-        ...buildTabMainRoutes(injector, {
+        ...buildTabMainRoutes(injector, PRIVATEFILES_MAIN_MENU_ROUTE, {
             redirectTo: 'root',
             pathMatch: 'full',
         }),
@@ -51,12 +52,12 @@ function buildRoutes(injector: Injector): Routes {
     ],
     exports: [RouterModule],
     providers: [
-        {
-            provide: ROUTES,
-            multi: true,
-            deps: [Injector],
-            useFactory: buildRoutes,
-        },
+        // {
+        //     provide: ROUTES,
+        //     multi: true,
+        //     deps: [Injector],
+        //     useFactory: buildRoutes,
+        // },
     ],
 })
 export class AddonPrivateFilesLazyModule {}

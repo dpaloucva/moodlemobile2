@@ -23,6 +23,7 @@ import { CoreTagComponentsModule } from '@features/tag/components/components.mod
 import { buildTabMainRoutes } from '@features/mainmenu/mainmenu-tab-routing.module';
 import { AddonBlogMainMenuHandlerService } from './services/handlers/mainmenu';
 import { CoreMainMenuComponentsModule } from '@features/mainmenu/components/components.module';
+import { BLOG_MAIN_MENU_ROUTE } from './blog.module';
 
 /**
  * Build module routes.
@@ -32,7 +33,7 @@ import { CoreMainMenuComponentsModule } from '@features/mainmenu/components/comp
  */
 function buildRoutes(injector: Injector): Routes {
     return [
-        ...buildTabMainRoutes(injector, {
+        ...buildTabMainRoutes(injector, BLOG_MAIN_MENU_ROUTE, {
             data: {
                 mainMenuTabRoot: AddonBlogMainMenuHandlerService.PAGE_NAME,
             },

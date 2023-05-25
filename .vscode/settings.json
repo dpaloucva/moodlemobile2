@@ -7,7 +7,7 @@
     "[html]": {
         "editor.defaultFormatter": "vscode.html-language-features",
     },
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": false,
     "eslint.format.enable": true,
     "html.format.endWithNewline": true,
     "html.format.wrapLineLength": 140,

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { APP_INITIALIZER, NgModule, Type } from '@angular/core';
-import { Routes } from '@angular/router';
+import { Route, Routes } from '@angular/router';
 
 import { CoreMainMenuRoutingModule } from '@features/mainmenu/mainmenu-routing.module';
 import { MESSAGES_OFFLINE_SITE_SCHEMA } from './services/database/messages';
@@ -46,12 +46,12 @@ export const ADDON_MESSAGES_SERVICES: Type<unknown>[] = [
     AddonMessagesSyncProvider,
 ];
 
-const mainMenuChildrenRoutes: Routes = [
-    {
-        path: AddonMessagesMainMenuHandlerService.PAGE_NAME,
-        loadChildren: () => import('./messages-lazy.module').then(m => m.AddonMessagesLazyModule),
-    },
-];
+export const MESSAGES_MAIN_MENU_ROUTE: Route = {
+    path: AddonMessagesMainMenuHandlerService.PAGE_NAME,
+    loadChildren: () => import('./messages-lazy.module').then(m => m.AddonMessagesLazyModule),
+};
+
+const mainMenuChildrenRoutes: Routes = [MESSAGES_MAIN_MENU_ROUTE];
 const preferencesRoutes: Routes = [
     {
         path: AddonMessagesSettingsHandlerService.PAGE_NAME,

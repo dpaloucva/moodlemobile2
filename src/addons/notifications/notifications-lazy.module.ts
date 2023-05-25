@@ -23,6 +23,7 @@ import { CoreMainMenuComponentsModule } from '@features/mainmenu/components/comp
 import { buildTabMainRoutes } from '@features/mainmenu/mainmenu-tab-routing.module';
 import { CoreScreen } from '@services/screen';
 import { AddonNotificationsMainMenuHandlerService } from './services/handlers/mainmenu';
+import { NOTIFICATIONS_MAIN_MENU_ROUTE } from './notifications.module';
 
 /**
  * Build module routes.
@@ -53,7 +54,7 @@ function buildRoutes(injector: Injector): Routes {
             path: 'notification',
             component: AddonNotificationsNotificationPage,
         },
-        ...buildTabMainRoutes(injector, {
+        ...buildTabMainRoutes(injector, NOTIFICATIONS_MAIN_MENU_ROUTE, {
             redirectTo: 'list',
             pathMatch: 'full',
         }),
@@ -71,12 +72,12 @@ function buildRoutes(injector: Injector): Routes {
     ],
     exports: [RouterModule],
     providers: [
-        {
-            provide: ROUTES,
-            multi: true,
-            deps: [Injector],
-            useFactory: buildRoutes,
-        },
+        // {
+        //     provide: ROUTES,
+        //     multi: true,
+        //     deps: [Injector],
+        //     useFactory: buildRoutes,
+        // },
     ],
 })
 export class AddonNotificationsLazyModule {}

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { APP_INITIALIZER, NgModule, Type } from '@angular/core';
-import { Routes } from '@angular/router';
+import { Route, Routes } from '@angular/router';
 
 import { CoreMainMenuRoutingModule } from '@features/mainmenu/mainmenu-routing.module';
 import { CoreMainMenuTabRoutingModule } from '@features/mainmenu/mainmenu-tab-routing.module';
@@ -27,12 +27,12 @@ export const ADDON_PRIVATEFILES_SERVICES: Type<unknown>[] = [
     AddonPrivateFilesHelperProvider,
 ];
 
-const routes: Routes = [
-    {
-        path: AddonPrivateFilesUserHandlerService.PAGE_NAME,
-        loadChildren: () => import('@addons/privatefiles/privatefiles-lazy.module').then(m => m.AddonPrivateFilesLazyModule),
-    },
-];
+export const PRIVATEFILES_MAIN_MENU_ROUTE: Route = {
+    path: AddonPrivateFilesUserHandlerService.PAGE_NAME,
+    loadChildren: () => import('@addons/privatefiles/privatefiles-lazy.module').then(m => m.AddonPrivateFilesLazyModule),
+};
+
+const routes: Routes = [PRIVATEFILES_MAIN_MENU_ROUTE];
 
 @NgModule({
     imports: [

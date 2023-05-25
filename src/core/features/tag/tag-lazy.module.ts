@@ -25,6 +25,7 @@ import { CoreTagIndexPage } from '@features/tag/pages/index/index';
 import { CoreTagSearchPage } from '@features/tag/pages/search/search';
 import { CoreScreen } from '@services/screen';
 import { CoreTagMainMenuHandlerService } from './services/handlers/mainmenu';
+import { TAG_MAIN_MENU_ROUTE } from './tag.module';
 
 const indexAreaRoute: Route = {
     path: 'index-area',
@@ -68,7 +69,7 @@ function buildRoutes(injector: Injector): Routes {
             component: CoreTagSearchPage,
         },
         indexAreaRoute,
-        ...buildTabMainRoutes(injector, {
+        ...buildTabMainRoutes(injector, TAG_MAIN_MENU_ROUTE, {
             redirectTo: 'search',
             pathMatch: 'full',
         }),
@@ -88,12 +89,12 @@ function buildRoutes(injector: Injector): Routes {
     ],
     exports: [RouterModule],
     providers: [
-        {
-            provide: ROUTES,
-            multi: true,
-            deps: [Injector],
-            useFactory: buildRoutes,
-        },
+        // {
+        //     provide: ROUTES,
+        //     multi: true,
+        //     deps: [Injector],
+        //     useFactory: buildRoutes,
+        // },
     ],
 })
 export class CoreTagLazyModule {}

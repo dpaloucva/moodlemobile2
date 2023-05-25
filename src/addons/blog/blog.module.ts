@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { APP_INITIALIZER, NgModule, Type } from '@angular/core';
-import { Routes } from '@angular/router';
+import { Route, Routes } from '@angular/router';
 import { CoreContentLinksDelegate } from '@features/contentlinks/services/contentlinks-delegate';
 import { CoreCourseIndexRoutingModule } from '@features/course/course-routing.module';
 import { CoreCourseOptionsDelegate } from '@features/course/services/course-options-delegate';
@@ -33,18 +33,18 @@ export const ADDON_BLOG_SERVICES: Type<unknown>[] = [
     AddonBlogProvider,
 ];
 
-const routes: Routes = [
-    {
-        path: AddonBlogMainMenuHandlerService.PAGE_NAME,
-        loadChildren: () => import('@addons/blog/blog-lazy.module').then(m => m.AddonBlogLazyModule),
-    },
-];
+export const BLOG_MAIN_MENU_ROUTE: Route = {
+    path: AddonBlogMainMenuHandlerService.PAGE_NAME,
+    loadChildren: () => import('./blog-lazy.module').then(m => m.AddonBlogLazyModule),
+};
+
+const routes: Routes = [BLOG_MAIN_MENU_ROUTE];
 
 @NgModule({
     imports: [
         CoreMainMenuTabRoutingModule.forChild(routes),
         CoreMainMenuRoutingModule.forChild({ children: routes }),
-        CoreCourseIndexRoutingModule.forChild({ children: routes }),
+        // CoreCourseIndexRoutingModule.forChild({ children: routes }),
     ],
     exports: [CoreMainMenuRoutingModule],
     providers: [

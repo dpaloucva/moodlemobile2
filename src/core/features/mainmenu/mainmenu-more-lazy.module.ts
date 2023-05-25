@@ -20,6 +20,7 @@ import { buildTabMainRoutes } from '@features/mainmenu/mainmenu-tab-routing.modu
 import { CoreMainMenuProvider } from '@features/mainmenu/services/mainmenu';
 import { CoreMainMenuComponentsModule } from '@features/mainmenu/components/components.module';
 import { CoreMainMenuMorePage } from '@features/mainmenu/pages/more/more';
+import { MORE_MAIN_MENU_ROUTE } from './mainmenu-lazy.module';
 
 /**
  * Build module routes.
@@ -28,7 +29,7 @@ import { CoreMainMenuMorePage } from '@features/mainmenu/pages/more/more';
  * @returns Routes.
  */
 function buildRoutes(injector: Injector): Routes {
-    return buildTabMainRoutes(injector, {
+    return buildTabMainRoutes(injector, MORE_MAIN_MENU_ROUTE, {
         component: CoreMainMenuMorePage,
         data: {
             mainMenuTabRoot: CoreMainMenuProvider.MORE_PAGE_NAME,
@@ -42,12 +43,12 @@ function buildRoutes(injector: Injector): Routes {
         CoreMainMenuComponentsModule,
     ],
     providers: [
-        {
-            provide: ROUTES,
-            multi: true,
-            deps: [Injector],
-            useFactory: buildRoutes,
-        },
+        // {
+        //     provide: ROUTES,
+        //     multi: true,
+        //     deps: [Injector],
+        //     useFactory: buildRoutes,
+        // },
     ],
     declarations: [
         CoreMainMenuMorePage,

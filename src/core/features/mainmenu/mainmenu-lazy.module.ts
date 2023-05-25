@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Injector, NgModule } from '@angular/core';
-import { ROUTES, Routes } from '@angular/router';
+import { ROUTES, Route, Routes } from '@angular/router';
 import { CoreSharedModule } from '@/core/shared.module';
 
 import { resolveMainMenuRoutes } from './mainmenu-routing.module';
@@ -21,6 +21,16 @@ import { CoreMainMenuPage } from './pages/menu/menu';
 import { CoreMainMenuHomeHandlerService } from './services/handlers/mainmenu';
 import { CoreMainMenuProvider } from './services/mainmenu';
 import { CoreMainMenuComponentsModule } from './components/components.module';
+
+export const HOME_MAIN_MENU_ROUTE: Route = {
+    path: CoreMainMenuHomeHandlerService.PAGE_NAME,
+    loadChildren: () => import('./mainmenu-home-lazy.module').then(m => m.CoreMainMenuHomeLazyModule),
+};
+
+export const MORE_MAIN_MENU_ROUTE: Route = {
+    path: CoreMainMenuProvider.MORE_PAGE_NAME,
+    loadChildren: () => import('./mainmenu-more-lazy.module').then(m => m.CoreMainMenuMoreLazyModule),
+};
 
 /**
  * Build module routes.
@@ -40,14 +50,8 @@ function buildRoutes(injector: Injector): Routes {
                     path: '',
                     pathMatch: 'full',
                 },
-                {
-                    path: CoreMainMenuHomeHandlerService.PAGE_NAME,
-                    loadChildren: () => import('./mainmenu-home-lazy.module').then(m => m.CoreMainMenuHomeLazyModule),
-                },
-                {
-                    path: CoreMainMenuProvider.MORE_PAGE_NAME,
-                    loadChildren: () => import('./mainmenu-more-lazy.module').then(m => m.CoreMainMenuMoreLazyModule),
-                },
+                HOME_MAIN_MENU_ROUTE,
+                MORE_MAIN_MENU_ROUTE,
                 ...mainMenuRoutes.children,
             ],
         },

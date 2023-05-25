@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { APP_INITIALIZER, NgModule, Type } from '@angular/core';
-import { Routes } from '@angular/router';
+import { Route, Routes } from '@angular/router';
 
 import { CoreCronDelegate } from '@services/cron';
 import { CoreMainMenuDelegate } from '@features/mainmenu/services/mainmenu-delegate';
@@ -37,12 +37,12 @@ export const ADDON_NOTIFICATIONS_SERVICES: Type<unknown>[] = [
     AddonNotificationsHelperProvider,
 ];
 
-const routes: Routes = [
-    {
-        path: AddonNotificationsMainMenuHandlerService.PAGE_NAME,
-        loadChildren: () => import('./notifications-lazy.module').then(m => m.AddonNotificationsLazyModule),
-    },
-];
+export const NOTIFICATIONS_MAIN_MENU_ROUTE: Route = {
+    path: AddonNotificationsMainMenuHandlerService.PAGE_NAME,
+    loadChildren: () => import('./notifications-lazy.module').then(m => m.AddonNotificationsLazyModule),
+};
+
+const routes: Routes = [NOTIFICATIONS_MAIN_MENU_ROUTE];
 const preferencesRoutes: Routes = [
     {
         path: AddonNotificationsSettingsHandlerService.PAGE_NAME,
