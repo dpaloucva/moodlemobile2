@@ -53,7 +53,6 @@ import { Keyboard as KeyboardService } from '@awesome-cordova-plugins/keyboard/n
 import { LocalNotifications as LocalNotificationsService } from '@awesome-cordova-plugins/local-notifications/ngx';
 import { MediaCapture as MediaCaptureService } from '@awesome-cordova-plugins/media-capture/ngx';
 import { Push as PushService } from '@moodlehq/ionic-native-push/ngx';
-import { QRScanner as QRScannerService } from '@ionic-native/qr-scanner/ngx';
 import { StatusBar as StatusBarService } from '@awesome-cordova-plugins/status-bar/ngx';
 import { SplashScreen as SplashScreenService } from '@awesome-cordova-plugins/splash-screen/ngx';
 import { SQLite as SQLiteService } from '@awesome-cordova-plugins/sqlite/ngx';
@@ -185,7 +184,6 @@ export const LocalNotifications = makeSingleton(LocalNotificationsService);
 export const MediaCapture = makeSingleton(MediaCaptureService);
 export const NativeHttp = makeSingleton(HTTP);
 export const Push = makeSingleton(PushService);
-export const QRScanner = makeSingleton(QRScannerService);
 export const StatusBar = makeSingleton(StatusBarService);
 export const SplashScreen = makeSingleton(SplashScreenService);
 export const SQLite = makeSingleton(SQLiteService);

@@ -15,6 +15,8 @@
 import { makeSingleton } from '@singletons';
 import { Chooser as ChooserService } from './chooser';
 import { Zip as ZipService } from './zip';
+import { QRScanner as QRScannerService } from './qrscanner';
 
 export const Chooser = makeSingleton(ChooserService);
 export const Zip = makeSingleton(ZipService);
+export const QRScanner = makeSingleton(QRScannerService);
