@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import { QRScannerStatus } from '@moodlehq/cordova-plugin-qrscanner';
+import { Observable } from 'rxjs';
+import { QRScannerError, QRScannerStatus } from '@moodlehq/cordova-plugin-qrscanner';
 
 /**
  * QR Scanner plugin wrapper
@@ -22,59 +21,162 @@ import { QRScannerStatus } from '@moodlehq/cordova-plugin-qrscanner';
 @Injectable({ providedIn: 'root' })
 export class QRScanner {
 
-    private window: Window;
-
-    constructor() {
-        this.window = window;
-    }
-
     /**
-     * Destroy QR scanner instance.
+     * Destroy the scanner instance.
      *
-     * @returns null
+     * @returns QR scanner status.
      */
-    destroy(): Promise<null> {
-        return new Promise((resolve) => this.window.QRScanner.destroy(resolve));
+    destroy(): Promise<QRScannerStatus> {
+        return new Promise((resolve) => window.QRScanner.destroy(resolve));
     }
 
     /**
-     * Prepare QR scanner instance.
+     * Request permission to use QR scanner.
      *
-     * @returns qr scanner status.
+     * @returns QR scanner status.
      */
     prepare(): Promise<QRScannerStatus> {
-        return new Promise(resolve =>
-            this.window.QRScanner.prepare((foo: unknown, status: QRScannerStatus) => (resolve(status))));
+        return new Promise((resolve, reject) => {
+            window.QRScanner.prepare((error: QRScannerError, status: QRScannerStatus) => {
+                error ? reject(error) : resolve(status);
+            });
+        });
     }
 
     /**
-     * Show QR Scanner.
+     * Configures the native webview to have a transparent background, then sets the background of the <body> and <html> DOM
+     * elements to transparent, allowing the webview to re-render with the transparent background.
      *
-     * @returns Qr scanner status.
+     * @returns QR scanner status.
      */
     show(): Promise<QRScannerStatus> {
-        return new Promise(resolve => this.window.QRScanner.show((status: QRScannerStatus) => resolve(status)));
+        return new Promise(resolve => window.QRScanner.show((status) => resolve(status)));
     }
 
     /**
-     * Return QR content scanned.
+     * Call this method to enable scanning. You must then call the `show` method to make the camera preview visible.
      *
-     * @returns Content scanned.
+     * @returns Observable that emits the scanned text. Unsubscribe from the observable to stop scanning.
      */
     scan(): Observable<string> {
-        const subject = new BehaviorSubject<string>('');
-        this.window.QRScanner.scan((foo: unknown, text: string) => subject.next(text));
+        return new Observable(observer => {
+            window.QRScanner.scan((error: QRScannerError, text: string) => {
+                error ? observer.error(error) : observer.next(text);
+            });
 
-        return subject.asObservable().pipe(filter(text => !!text));
+            return () => {
+                window.QRScanner.cancelScan();
+            };
+        });
     }
 
     /**
-     * Hide QR Scanner.
+     * Configures the native webview to be opaque with a white background, covering the video preview.
      *
-     * @returns null.
+     * @returns QR scanner status.
      */
-    hide(): Promise<null> {
-        return new Promise((resolve) => this.window.QRScanner.hide(resolve));
+    hide(): Promise<QRScannerStatus> {
+        return new Promise((resolve) => window.QRScanner.hide(resolve));
+    }
+
+    /**
+     * Enable the device's light (for scanning in low-light environments).
+     *
+     * @returns QR scanner status.
+     */
+    enableLight(): Promise<QRScannerStatus> {
+        return new Promise((resolve, reject) => {
+            window.QRScanner.enableLight((error: QRScannerError, status: QRScannerStatus) => {
+                error ? reject(error) : resolve(status);
+            });
+        });
+    }
+
+    /**
+     * Disable the device's light.
+     *
+     * @returns QR scanner status.
+     */
+    disableLight(): Promise<QRScannerStatus> {
+        return new Promise((resolve, reject) => {
+            window.QRScanner.disableLight((error: QRScannerError, status: QRScannerStatus) => {
+                error ? reject(error) : resolve(status);
+            });
+        });
+    }
+
+    /**
+     * Use front camera.
+     *
+     * @returns QR scanner status.
+     */
+    useFrontCamera(): Promise<QRScannerStatus> {
+        return new Promise((resolve, reject) => {
+            window.QRScanner.useFrontCamera((error: QRScannerError, status: QRScannerStatus) => {
+                error ? reject(error) : resolve(status);
+            });
+        });
+    }
+
+    /**
+     * Use back camera.
+     *
+     * @returns QR scanner status.
+     */
+    useBackCamera(): Promise<QRScannerStatus> {
+        return new Promise((resolve, reject) => {
+            window.QRScanner.useBackCamera((error: QRScannerError, status: QRScannerStatus) => {
+                error ? reject(error) : resolve(status);
+            });
+        });
+    }
+
+    /**
+     * Disable the device's light.
+     *
+     * @param camera Provide `0` for back camera, and `1` for front camera.
+     * @returns QR scanner status.
+     */
+    useCamera(camera: number): Promise<QRScannerStatus> {
+        return new Promise((resolve, reject) => {
+            window.QRScanner.useCamera(camera, (error: QRScannerError, status: QRScannerStatus) => {
+                error ? reject(error) : resolve(status);
+            });
+        });
+    }
+
+    /**
+     * Pauses the video preview on the current frame and pauses scanning.
+     *
+     * @returns QR scanner status.
+     */
+    pausePreview(): Promise<QRScannerStatus> {
+        return new Promise((resolve) => window.QRScanner.pausePreview(resolve));
+    }
+
+    /**
+     * Resume the video preview and resumes scanning.
+     *
+     * @returns QR scanner status.
+     */
+    resumePreview(): Promise<QRScannerStatus> {
+        return new Promise((resolve) => window.QRScanner.resumePreview(resolve));
+    }
+
+    /**
+     * Returns permission status.
+     *
+     * @returns QR scanner status.
+     */
+    getStatus(): Promise<QRScannerStatus> {
+        return new Promise((resolve) => window.QRScanner.getStatus(resolve));
+    }
+
+    /**
+     * Opens settings to edit app permissions.
+     */
+    openSettings(): void {
+        window.QRScanner.openSettings();
     }
 
 }

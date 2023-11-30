@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Observable } from 'rxjs';
-
 /**
  * Types for qr scanner plugin.
+ *
+ * @see https://github.com/moodlemobile/cordova-plugin-qrscanner
  */
 
 type IQRScannerStatus = {
@@ -33,19 +33,36 @@ type IQRScannerStatus = {
     currentCamera: number;
 };
 
+type IQRScannerError = {
+    name: string;
+    code: number;
+    _message: string; // eslint-disable-line @typescript-eslint/naming-convention
+};
+
 interface Window {
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     QRScanner: {
-        destroy(): Promise<null>;
-        prepare(): Promise<IQRScannerStatus>;
-        show(): Promise<IQRScannerStatus>;
-        scan(): Observable<string>;
-        hide(): Promise<null>;
+        prepare(onDone?: (error: IQRScannerError, status: IQRScannerStatus) => void): void;
+        destroy(onDone?: (status: IQRScannerStatus) => void): void;
+        scan(onDone: (error: IQRScannerError, text: string) => void): void;
+        cancelScan(onDone?: (status: IQRScannerStatus) => void): void;
+        show(onDone?: (status: IQRScannerStatus) => void): void;
+        hide(onDone?: (status: IQRScannerStatus) => void): void;
+        pausePreview(onDone?: (status: IQRScannerStatus) => void): void;
+        resumePreview(onDone?: (status: IQRScannerStatus) => void): void;
+        enableLight(onDone?: (error: IQRScannerError, status: IQRScannerStatus) => void): void;
+        disableLight(onDone?: (error: IQRScannerError, status: IQRScannerStatus) => void): void;
+        useCamera(camera: number, onDone?: (error: IQRScannerError, status: IQRScannerStatus) => void): void;
+        useFrontCamera(onDone?: (error: IQRScannerError, status: IQRScannerStatus) => void): void;
+        useBackCamera(onDone?: (error: IQRScannerError, status: IQRScannerStatus) => void): void;
+        openSettings(onDone?: (error: IQRScannerError, status: IQRScannerStatus) => void): void;
+        getStatus(onDone: (status: IQRScannerStatus) => void): void;
     };
 
 }
 
 declare module '@moodlehq/cordova-plugin-qrscanner' {
     export type QRScannerStatus = IQRScannerStatus;
+    export type QRScannerError = IQRScannerError;
 }
