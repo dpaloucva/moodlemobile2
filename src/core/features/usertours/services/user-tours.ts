@@ -126,6 +126,7 @@ export class CoreUserToursService {
         );
         const tour = CoreDirectivesRegistry.require(element, CoreUserToursUserTourComponent);
 
+        console.error('SET ARIA HIDDEN TRUE ON SHOW TOUR', viewContainer?.outerHTML.replace(viewContainer?.innerHTML, '...'));
         viewContainer?.setAttribute('aria-hidden', 'true');
 
         this.toursListeners[options.id]?.forEach(listener => listener.resolve());
@@ -148,6 +149,7 @@ export class CoreUserToursService {
         const container = document.querySelector('ion-app') ?? document.body;
         const viewContainer = container.querySelector('ion-router-outlet, ion-nav, #ion-view-container-root');
 
+        console.error('REMOVE ARIA HIDDEN TRUE ON DISMISS TOUR', viewContainer?.outerHTML.replace(viewContainer?.innerHTML, '...'));
         viewContainer?.removeAttribute('aria-hidden');
     }
 

@@ -1,4 +1,4 @@
-@core_reminders @app @javascript
+@core_reminders @app @javascript @danitest
 Feature: Set a new reminder on course
 
   Background:

@@ -414,9 +414,11 @@ export class TestingBehatRuntimeService {
         }
 
         this.log('Action - Press', locator);
+        if (locator.text.includes('Course end date')) { console.error('START PRESS', locator.text); }
 
         try {
             const found = TestingBehatDomUtils.findElementBasedOnText(locator, { onlyClickable: true, containerName: '' });
+            if (locator.text.includes('Course end date')) { console.error('END PRESS: FOUND?', !!found, locator.text); }
 
             if (!found) {
                 return 'ERROR: No element matches locator to press.';

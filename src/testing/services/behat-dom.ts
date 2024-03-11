@@ -43,8 +43,19 @@ export class TestingBehatDomUtilsService {
      * @param container Container. If set, the function will also check parent elements visibility.
      * @returns Whether the element is visible or not.
      */
-    isElementVisible(element: HTMLElement, container?: HTMLElement): boolean {
+    isElementVisible(element: HTMLElement, container?: HTMLElement, debug = false): boolean {
         if (element.getAttribute('aria-hidden') === 'true' || getComputedStyle(element).display === 'none') {
+            if (debug) {
+                console.error(
+                    'ELEMENT NOT VISIBLE IN STEP 1!!!',
+                    element.outerHTML.replace(element.innerHTML, '...'),
+                    'CHECK 1',
+                    element.getAttribute('aria-hidden') === 'true',
+                    'CHECK 2',
+                    getComputedStyle(element).display === 'none',
+                );
+            }
+
             return false;
         }
 
@@ -361,7 +372,7 @@ export class TestingBehatDomUtilsService {
      * @param containerName Whether to search inside the a container name.
      * @returns Found top container elements.
      */
-    protected getCurrentTopContainerElements(containerName: string): HTMLElement[] {
+    protected getCurrentTopContainerElements(containerName: string, debug = false): HTMLElement[] {
         const topContainers: HTMLElement[] = [];
         let containers = Array.from(document.querySelectorAll<HTMLElement>([
             'ion-alert.hydrated',
@@ -376,7 +387,7 @@ export class TestingBehatDomUtilsService {
 
         containers = containers
             .filter(container => {
-                if (!this.isElementVisible(container)) {
+                if (!this.isElementVisible(container, undefined, debug)) {
                     // Ignore containers not visible.
                     return false;
                 }
@@ -494,6 +505,8 @@ export class TestingBehatDomUtilsService {
         // Remove extra spaces.
         const treatedText = locator.text.trim().replace(/\s\s+/g, ' ');
         if (treatedText !== locator.text) {
+
+            if (locator.text.includes('Course end date')) { console.error('TEXT HAS CHANGED, SEARCH FIRST', treatedText, locator.text); }
             const element = this.findElementsBasedOnText({
                 ...locator,
                 text: treatedText,
@@ -546,11 +559,15 @@ export class TestingBehatDomUtilsService {
         locator: TestingBehatElementLocator,
         options: TestingBehatFindOptions,
     ): HTMLElement[] {
-        const topContainers = this.getCurrentTopContainerElements(options.containerName ?? '');
+        const topContainers = this.getCurrentTopContainerElements(options.containerName ?? '', locator.text.includes('Course end date') && options.onlyClickable);
         let elements: HTMLElement[] = [];
+        if (locator.text.includes('Course end date') && options.onlyClickable) {
+            console.error('CONTAINERS', topContainers.map(c => c.tagName).join(', '));
+        }
 
         for (let i = 0; i < topContainers.length; i++) {
             elements = elements.concat(this.findElementsBasedOnTextInContainer(locator, topContainers[i], options));
+            // if (locator.text.includes('Course end date') && options.onlyClickable) { console.error('FIND IN CONTAINER', elements.length, topContainers[i].outerHTML); }
             if (elements.length) {
                 break;
             }

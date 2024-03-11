@@ -1385,9 +1385,22 @@ export class CoreDomUtilsProvider {
             position: options.position ?? 'bottom',
         };
 
+        console.error(
+            'SEARCH ION MODAL BEFORE SHOW TOAST',
+            Array.from(document.querySelectorAll('ion-modal'))
+                .map(modal => modal.outerHTML.replace(modal.innerHTML, '...'))
+                .join(',          '),
+        );
+
         const loader = await ToastController.create(toastOptions);
 
         await loader.present();
+        console.error(
+            'SEARCH ION MODAL AFTER SHOW TOAST',
+            Array.from(document.querySelectorAll('ion-modal'))
+                .map(modal => modal.outerHTML.replace(modal.innerHTML, '...'))
+                .join(',          '),
+        );
 
         return loader;
     }
@@ -1454,6 +1467,7 @@ export class CoreDomUtilsProvider {
     ): Promise<T | undefined> {
         const { waitForDismissCompleted, closeOnNavigate, ...modalOptions } = options;
         const listenCloseEvents = closeOnNavigate ?? true; // Default to true.
+        console.error('OPEN MODAL!', options.component?.toString(), options.cssClass, JSON.stringify(options.componentProps ?? {}));
 
         // TODO: Improve this if we need two modals with same component open at the same time.
         const modalId = <string> Md5.hashAsciiStr(options.component?.toString() || '');
@@ -1484,6 +1498,7 @@ export class CoreDomUtilsProvider {
         }
 
         const result = await resultPromise;
+        console.error('DISMISS MODAL!', options.component?.toString(), options.cssClass);
 
         navSubscription?.unsubscribe();
         delete this.displayedModals[modalId];
@@ -1523,6 +1538,7 @@ export class CoreDomUtilsProvider {
     async openPopover<T = void>(options: OpenPopoverOptions): Promise<T | undefined> {
 
         const { waitForDismissCompleted, ...popoverOptions } = options;
+        console.error('OPEN POPOVER!', popoverOptions.component?.toString(), popoverOptions.cssClass);
         const popover = await PopoverController.create(popoverOptions);
         const zoomLevel = await CoreConfig.get(CoreConstants.SETTINGS_ZOOM_LEVEL, CoreConstants.CONFIG.defaultZoomLevel);
 
@@ -1541,6 +1557,7 @@ export class CoreDomUtilsProvider {
         }
 
         const result = waitForDismissCompleted ? await popover.onDidDismiss<T>() : await popover.onWillDismiss<T>();
+        console.error('POPOVER DISMISSED!', popoverOptions.component?.toString(), popoverOptions.cssClass);
         if (result?.data) {
             return result?.data;
         }

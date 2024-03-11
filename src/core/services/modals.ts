@@ -72,12 +72,14 @@ export class CoreModalsService {
         );
         const modal = await sheetModal.show();
 
+        console.error('SET ARIA HIDDEN TRUE ON OPEN SHEET', viewContainer?.outerHTML.replace(viewContainer?.innerHTML, '...'));
         viewContainer?.setAttribute('aria-hidden', 'true');
 
         modal.result.finally(async () => {
             await sheetModal.hide();
             await AngularFrameworkDelegate.removeViewFromDom(container, element);
 
+            console.error('REMOVE ARIA HIDDEN ON OPEN SHEET', viewContainer?.outerHTML.replace(viewContainer?.innerHTML, '...'));
             viewContainer?.removeAttribute('aria-hidden');
         });
 

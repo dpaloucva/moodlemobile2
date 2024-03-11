@@ -2000,6 +2000,7 @@ export class CoreCourseHelperProvider {
      * @param course Course selected
      */
     openCourseSummary(course: CoreCourseWithImageAndColor & CoreCourseAnyCourseData): void {
+        console.error('OPEN COURSE SUMMARY!');
         CoreDomUtils.openSideModal<void>({
             component: CoreCourseSummaryPage,
             componentProps: {

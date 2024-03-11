@@ -90,6 +90,7 @@ export class CoreEmulatorCaptureHelperProvider {
             params.maxTime = options.duration * 1000;
         }
 
+        console.error('CAPTURE COMP OPEN MODAL!');
         const modal = await ModalController.create({
             component: CoreEmulatorCaptureMediaComponent,
             cssClass: 'core-modal-fullscreen',
@@ -99,6 +100,7 @@ export class CoreEmulatorCaptureHelperProvider {
         await modal.present();
 
         const result = await modal.onDidDismiss();
+        console.error('CAPTURE COMP DISMISS MODAL!');
 
         if (result.role == 'success') {
             return result.data;
