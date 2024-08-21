@@ -24,6 +24,7 @@ import {
     Type,
     ElementRef,
     ChangeDetectorRef,
+    ViewChild,
 } from '@angular/core';
 import { CoreDomUtils } from '@services/utils/dom';
 import { CoreDynamicComponent } from '@components/dynamic-component/dynamic-component';
@@ -39,7 +40,7 @@ import {
 } from '@features/course/services/course-helper';
 import { CoreCourseFormatDelegate } from '@features/course/services/format-delegate';
 import { CoreEventObserver, CoreEvents } from '@singletons/events';
-import { IonContent } from '@ionic/angular';
+import { AccordionGroupChangeEventDetail, IonAccordionGroup, IonContent } from '@ionic/angular';
 import { CoreUtils } from '@services/utils/utils';
 import { CoreCourseIndexSectionWithModule } from '../course-index/course-index';
 import { CoreBlockHelper } from '@features/block/services/block-helper';
@@ -59,6 +60,7 @@ import { CoreCourseComponentsModule } from '../components.module';
 import { CoreSites } from '@services/sites';
 import { COURSE_ALL_SECTIONS_PREFERRED_PREFIX } from '@features/course/constants';
 import { toBoolean } from '@/core/transforms/boolean';
+import { CoreInfiniteLoadingComponent } from '@components/infinite-loading/infinite-loading';
 
 /**
  * Component to display course contents using a certain format. If the format isn't found, use default one.
@@ -96,6 +98,12 @@ export class CoreCourseFormatComponent implements OnInit, OnChanges, OnDestroy {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     @ViewChildren(CoreDynamicComponent) dynamicComponents?: QueryList<CoreDynamicComponent<any>>;
 
+    @ViewChild('accordionGroup', { static: true }) accordionGroup?: IonAccordionGroup;
+
+    @ViewChild(CoreInfiniteLoadingComponent) infiteLoading?: CoreInfiniteLoadingComponent;
+
+    accordionGroupValue: string[] = [];
+
     // All the possible component classes.
     courseFormatComponent?: Type<unknown>;
     singleSectionComponent?: Type<unknown>;
@@ -119,9 +127,9 @@ export class CoreCourseFormatComponent implements OnInit, OnChanges, OnDestroy {
     displayCourseIndex = false;
     displayBlocks = false;
     hasBlocks = false;
-    selectedSection?: CoreCourseSection;
-    previousSection?: CoreCourseSection;
-    nextSection?: CoreCourseSection;
+    selectedSection?: CoreCourseSectionToDisplay;
+    previousSection?: CoreCourseSectionToDisplay;
+    nextSection?: CoreCourseSectionToDisplay;
     allSectionsId: number = CoreCourseProvider.ALL_SECTIONS_ID;
     stealthModulesSectionId: number = CoreCourseProvider.STEALTH_MODULES_SECTION_ID;
     loaded = false;
@@ -149,7 +157,7 @@ export class CoreCourseFormatComponent implements OnInit, OnChanges, OnDestroy {
     /**
      * @inheritdoc
      */
-    ngOnInit(): void {
+    async ngOnInit(): Promise<void> {
         if (this.course === undefined) {
             CoreDomUtils.showErrorModal('Course not set');
 
@@ -195,6 +203,11 @@ export class CoreCourseFormatComponent implements OnInit, OnChanges, OnDestroy {
                 }
             }
             this.changeDetectorRef.markForCheck();
+        });
+
+        this.sections.forEach((section) => {
+            section.expanded = true;
+            this.accordionGroupValue.push(section.id.toString());
         });
     }
 
@@ -289,12 +302,11 @@ export class CoreCourseFormatComponent implements OnInit, OnChanges, OnDestroy {
      * @param sections Sections to treat.
      * @returns Promise resolved when done.
      */
-    protected async treatSections(sections: CoreCourseSection[]): Promise<void> {
+    protected async treatSections(sections: CoreCourseSectionToDisplay[]): Promise<void> {
         const hasAllSections = sections[0].id == CoreCourseProvider.ALL_SECTIONS_ID;
         const hasSeveralSections = sections.length > 2 || (sections.length == 2 && !hasAllSections);
 
         await this.initializeViewedModules();
-
         if (this.selectedSection) {
             const selectedSection = this.selectedSection;
             // We have a selected section, but the list has changed. Search the section in the list.
@@ -426,7 +438,7 @@ export class CoreCourseFormatComponent implements OnInit, OnChanges, OnDestroy {
 
         // Check current scrolled section.
         const allSectionElements: NodeListOf<HTMLElement> =
-            this.elementRef.nativeElement.querySelectorAll('section.core-course-module-list-wrapper');
+            this.elementRef.nativeElement.querySelectorAll('.core-course-module-list-wrapper');
 
         const scroll = await this.content.getScrollElement();
         const containerTop = scroll.getBoundingClientRect().top;
@@ -515,9 +527,12 @@ export class CoreCourseFormatComponent implements OnInit, OnChanges, OnDestroy {
      * @param newSection The new selected section.
      * @param moduleId The module to scroll to.
      */
-    sectionChanged(newSection: CoreCourseSection, moduleId?: number): void {
+    sectionChanged(newSection: CoreCourseSectionToDisplay, moduleId?: number): void {
         const previousValue = this.selectedSection;
         this.selectedSection = newSection;
+
+        this.accordionGroup?.requestAccordionToggle(newSection.id.toString(), true);
+
         this.data.section = this.selectedSection;
 
         if (newSection.id !== this.allSectionsId) {
@@ -732,8 +747,35 @@ export class CoreCourseFormatComponent implements OnInit, OnChanges, OnDestroy {
         return !!showAllSections;
     }
 
+    /**
+     * Toogle the visibility of a section (expand/collapse).
+     *
+     * @param ev The event of the accordion.
+     */
+    accordionGroupChange(ev: AccordionGroupChangeEventDetail): void {
+        const sectionIds = ev.value as string[] | undefined;
+        this.sections.forEach((section) => {
+            section.expanded = false;
+        });
+
+        if (sectionIds === undefined) {
+            return;
+        }
+
+        sectionIds.forEach((sectionId) => {
+            const sId = Number(sectionId);
+            const section = this.sections.find((section) => section.id === sId);
+            if (section) {
+                section.expanded = true;
+            }
+        });
+
+        this.infiteLoading?.fireInfiniteScrollIfNeeded();
+    }
+
 }
 
 type CoreCourseSectionToDisplay = CoreCourseSection & {
     highlighted?: boolean;
+    expanded?: boolean;
 };
