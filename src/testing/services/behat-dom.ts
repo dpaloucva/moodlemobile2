@@ -426,15 +426,13 @@ export class TestingBehatDomUtilsService {
                 if (!container.classList.contains('ion-page')) {
                     return false;
                 }
+                if (container.closest('ion-router-outlet.content-outlet')) {
+                    splitViewContainer = container;
 
-                const pageContainers = Array.from(container.querySelectorAll<HTMLElement>('.ion-page:not(.ion-page-hidden)'));
-                const topContainer = pageContainers.find((page) => !page.closest('.ion-page.ion-page-hidden')) ?? null;
+                    return true;
+                }
 
-                splitViewContainer = (topContainer || container).querySelector<HTMLElement>(
-                    'core-split-view ion-router-outlet',
-                );
-
-                return !!splitViewContainer;
+                return false;
             });
 
             return splitViewContainer ? [splitViewContainer] : [];
