@@ -345,7 +345,10 @@ Feature: Test basic usage of messages in app
     When I press "Mute" in the app
     Then I should find "Muted conversation" in the app
 
-    When I press "Messages" in the app
+    When I press the back button in the app
+    And I press the back button in the app
+    And I press the back button in the app
+    And I press "Messages" in the app
     And I press "Private (1)" in the app
     And I press "Student2 student2" in the app
     Then I should find "test message" in the app

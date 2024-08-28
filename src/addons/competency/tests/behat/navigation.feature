@@ -239,6 +239,8 @@ Feature: Test competency navigation
     When I press the back button in the app
     And I press the back button in the app
     And I press the back button in the app
+    And I press the back button in the app
+    And I press the back button in the app
     And I press "Messages" in the app
     And I press "Search people and messages" in the app
     And I set the field "Search" to "student" in the app

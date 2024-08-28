@@ -133,8 +133,6 @@ Feature: It synchronise sites properly
     # Test log in to sync
     When I press the back button in the app
     And I press the back button in the app
-    And I press the more menu button in the app
-    And I press "App settings" in the app
     And I press "Synchronisation" in the app
     And I switch network connection to wifi
     Then I should find "Accounts" in the app
